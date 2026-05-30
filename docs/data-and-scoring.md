@@ -245,3 +245,51 @@ Required report limitations:
 - No wet-lab validation performed in the demo.
 - Candidate structures and scores may be mocked or precomputed.
 - Output is not a clinical or therapeutic claim.
+
+## Optional Structural Validation Fields
+
+The Biomni replay shows the shape GPCRclaw should eventually support when real or precomputed structure/scoring artifacts exist.
+
+Add these fields optionally; do not require them for the MVP mock dataset:
+
+```typescript
+type StructuralValidation = {
+  generation_campaign?: string;
+  generation_batch?: string;
+  source_template?: string;
+  job_ids?: string[];
+
+  cdr3_aromatic_count?: number;
+  cdr3_net_charge?: number;
+  has_dp_motif?: boolean;
+  dp_position?: number;
+
+  boltz_iptm?: number;
+  boltz_ptm?: number;
+  boltz_confidence?: number;
+  complex_plddt?: number;
+
+  thermo_mean_ddg?: number;
+  thermo_min_ddg?: number;
+  thermo_stabilizing_mutations?: number;
+  thermo_destabilizing_mutations?: number;
+
+  immunebuilder_mean_error?: number;
+  immunebuilder_cdr3_error?: number;
+  immunebuilder_framework_error?: number;
+
+  composite_score?: number;
+};
+```
+
+When these fields are available, GPCRclaw can use a structural-validation ranking formula:
+
+```text
+composite =
+  0.55 * Boltz-2 ipTM
++ 0.15 * normalized ThermoMPNN stability
++ 0.15 * normalized complex pLDDT
++ 0.15 * normalized/inverted ImmuneBuilder CDR3 error
+```
+
+This formula should be separate from the MVP mock formula. The UI should label which scoring mode was used.
