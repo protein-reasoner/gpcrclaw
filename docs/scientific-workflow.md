@@ -151,3 +151,9 @@ Example MRGPRX2 demo hotspots:
 - Candidate structures and interface scores can be mocked or precomputed for hackathon speed.
 - The app should consistently say `predicted`, `demo-derived`, `precomputed`, or `computational`.
 - The final output requires wet-lab validation.
+
+## Replay-Derived Caveat
+
+The shared Biomni replay used MOR antagonist design where CDR3 was allowed to engage the orthosteric pocket plus the ECL2 lid. That is a different biological objective from the current GPCRclaw brief.
+
+For LPAR1/MRGPRX2, keep the default scope ECL2-focused unless the user explicitly changes the target epitope. Do not import MOR-specific assumptions such as pocket penetration, MOR hotspot residues, or DP motif preference into the GPCRclaw target configs.

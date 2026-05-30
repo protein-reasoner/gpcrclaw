@@ -17,6 +17,7 @@ The core product sentence:
 - [Implementation Plan](./implementation-plan.md): phased build order, repo structure, APIs, and engineering milestones.
 - [UI And Demo Runbook](./ui-and-demo-runbook.md): screens, user flow, demo script, and visual priorities.
 - [Claim Boundaries](./claim-boundaries.md): wording rules, limitation handling, and scientific safety constraints.
+- [Biomni Replay Analysis](./biomni-replay-analysis.md): extracted lessons from the shared Biomni MOR nanobody design run and how they should change GPCRclaw.
 
 ## Source Status
 
