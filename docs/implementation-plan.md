@@ -228,3 +228,34 @@ Done when:
 5. Dynamic brief parsing last.
 
 This order avoids spending time on 3D or LLM behavior before the product has a coherent core.
+
+## Biomni Replay Addendum
+
+The shared Biomni replay shows a more realistic end-state pipeline than the first GPCRclaw MVP:
+
+```text
+RFAntibody / RFdiffusion + ProteinMPNN generation
+-> Boltz-2 complex scoring
+-> ThermoMPNN stability scoring
+-> ImmuneBuilder CDR loop quality
+-> integrated ranking
+-> report plus artifacts
+```
+
+Use this as a long-term architecture target, not as the first implementation requirement.
+
+Recommended product modes:
+
+- `mock`: local JSON candidates and deterministic scoring.
+- `precomputed`: load completed CSV/JSON/PDB artifacts from a prior run and render a real campaign report.
+- `live`: submit generation/scoring jobs, track batches, retry failures, and stream progress.
+
+For the hackathon build, implement `mock` first and design the data model so `precomputed` can be added without rewriting the UI.
+
+Operational lessons to encode in the model:
+
+- Real generation must be batched; avoid monolithic jobs.
+- Campaigns can be partial and still useful.
+- Store job IDs, batch IDs, output artifact IDs, and retry notes.
+- Structure scoring and report generation should work even when only top candidates have expensive metrics.
+- Tool-derived scores must be labeled with tool name and provenance.
