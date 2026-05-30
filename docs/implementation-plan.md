@@ -259,3 +259,7 @@ Operational lessons to encode in the model:
 - Store job IDs, batch IDs, output artifact IDs, and retry notes.
 - Structure scoring and report generation should work even when only top candidates have expensive metrics.
 - Tool-derived scores must be labeled with tool name and provenance.
+
+## Workstream Bucket Reference
+
+The full build is split into ownership-sized buckets in [Workstream Buckets](./workstream-buckets.md). Use that document as the operating map when turning this plan into tasks.
