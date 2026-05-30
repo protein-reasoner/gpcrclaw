@@ -341,3 +341,24 @@ Report sections:
 - Limitations.
 
 The report should be the final proof object of the app.
+
+## Optional Real-Tool Validation Track
+
+The first GPCRclaw build can keep the pipeline deterministic. The Biomni replay suggests an eventual validation track:
+
+```text
+Candidate Loader
+-> Boltz-2 Complex Scorer
+-> ThermoMPNN Stability Scorer
+-> ImmuneBuilder Loop QC
+-> Integrated Ranker
+```
+
+This track should run after candidate generation and before final ranking when precomputed or live tool outputs exist.
+
+Design constraints:
+
+- The ranker must tolerate missing expensive metrics.
+- Tool outputs should be attached as evidence, not hidden behind a single score.
+- Every metric should keep provenance: tool, job ID, input template, and whether it was live, precomputed, or demo-derived.
+- The report should list skipped or failed batches because operational failures are part of a real scientific campaign.
