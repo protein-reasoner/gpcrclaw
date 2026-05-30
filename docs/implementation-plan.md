@@ -263,3 +263,5 @@ Operational lessons to encode in the model:
 ## Workstream Bucket Reference
 
 The full build is split into ownership-sized buckets in [Workstream Buckets](./workstream-buckets.md). Use that document as the operating map when turning this plan into tasks.
+
+The concrete agent/GPU execution decision is in [Agent GPU Architecture](./agent-gpu-architecture.md). Use that document for backend adapter contracts, model-worker output contracts, and `alankrit/` naming.

@@ -210,6 +210,10 @@ Step-one deliverable:
 - Design Google Batch and Vertex adapter schemas.
 - Later: submit one real single-candidate scoring job and parse output.
 
+Concrete architecture reference:
+
+- See [Agent GPU Architecture](./agent-gpu-architecture.md) for the Cloud Run control plane, Google Batch first backend decision, model-worker contracts, and `alankrit/` naming.
+
 ## Bucket 5: Sampling, Batching, And Scheduling Strategy
 
 Purpose: decide how many candidates to sample and how to allocate GPUs efficiently.
