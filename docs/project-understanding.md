@@ -114,4 +114,3 @@ Stretch success means:
 - Metadata can be fetched live.
 - Hotspots can be derived from coordinates instead of mocked.
 - Candidate generation can call a real model or external service.
-
