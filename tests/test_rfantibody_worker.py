@@ -8,7 +8,7 @@ from pathlib import Path
 
 import tests._path  # noqa: F401
 from gpcrclaw.worker_contract import MODEL_METRIC_SCHEMAS, parse_worker_outputs, write_manifest
-from gpcrclaw.workers.rfantibody import EXIT_NOT_CONFIGURED, run_rfantibody_generation
+from gpcrclaw.workers.rfantibody import EXIT_NOT_CONFIGURED, configured_commands, run_rfantibody_generation
 
 
 def valid_manifest(output_dir: Path) -> dict:
@@ -122,6 +122,25 @@ class RFAntibodyWorkerTest(unittest.TestCase):
             error = json.loads((output / "error.json").read_text())
             self.assertEqual(error["error_type"], "not_configured")
             self.assertFalse(error["retryable"])
+
+    def test_default_rfantibody_commands_use_official_pipeline_tools(self) -> None:
+        commands = configured_commands(
+            {
+                "target_structure": "/mnt/disks/input/assets/target.pdb",
+                "framework_pdb": "/opt/RFantibody/frameworks/vhh.pdb",
+                "raw_output_dir": "/mnt/disks/output/rfantibody_raw",
+                "num_candidates": 3,
+                "hotspot_residues": ["A12", "A15"],
+            }
+        )
+
+        self.assertEqual(commands[0][0:2], ["uv", "run"])
+        self.assertIn("rfdiffusion", commands[0])
+        self.assertIn("proteinmpnn", commands[1])
+        self.assertIn("rf2", commands[2])
+        self.assertEqual(commands[3][0:2], ["bash", "-lc"])
+        self.assertIn("qvscorefile", commands[3][2])
+        self.assertIn("qvextract", commands[3][2])
 
     def test_live_mode_discovers_fasta_outputs_when_normalized_table_is_absent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
