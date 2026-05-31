@@ -1,0 +1,8 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY pyproject.toml /app/
+COPY src /app/src
+ENV PYTHONPATH=/app/src
+
+CMD ["python", "-m", "gpcrclaw.workers.fake_worker", "--help"]
