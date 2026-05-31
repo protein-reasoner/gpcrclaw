@@ -5,11 +5,20 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        curl \
         git \
-        python3 \
-        python3-dev \
-        python3-pip \
-    && ln -sf /usr/bin/python3 /usr/local/bin/python \
+        software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python3.12 \
+        python3.12-dev \
+        python3.12-venv \
+    && curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py \
+    && python3.12 /tmp/get-pip.py \
+    && rm -f /tmp/get-pip.py \
+    && ln -sf /usr/bin/python3.12 /usr/local/bin/python \
+    && ln -sf /usr/bin/python3.12 /usr/local/bin/python3 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -23,13 +32,13 @@ ENV ESMFOLD2_DEVICE=cuda
 
 ARG ESMFOLD2_REF=c94ed8d
 ARG PREWARM_ESMFOLD2_WEIGHTS=true
-RUN python3 -m pip install --no-cache-dir --upgrade pip \
-    && python3 -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu124 torch \
-    && python3 -m pip install --no-cache-dir "esm@git+https://github.com/Biohub/esm.git@${ESMFOLD2_REF}"
+RUN python3.12 -m pip install --no-cache-dir --upgrade pip \
+    && python3.12 -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu124 torch \
+    && python3.12 -m pip install --no-cache-dir "esm@git+https://github.com/Biohub/esm.git@${ESMFOLD2_REF}"
 
 RUN mkdir -p "${HF_HOME}" \
     && if [ "${PREWARM_ESMFOLD2_WEIGHTS}" = "true" ]; then \
-        python3 -c "import os; from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model; model_id = os.environ.get('ESMFOLD2_MODEL_ID', 'biohub/ESMFold2'); ESMFold2Model.from_pretrained(model_id); print(f'prewarmed {model_id}')" ; \
+        python3.12 -c "import os; from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model; model_id = os.environ.get('ESMFOLD2_MODEL_ID', 'biohub/ESMFold2'); ESMFold2Model.from_pretrained(model_id); print(f'prewarmed {model_id}')" ; \
     fi
 
-CMD ["python3", "-m", "gpcrclaw.workers.esmfold2", "--manifest", "/mnt/disks/input/manifest.json"]
+CMD ["python3.12", "-m", "gpcrclaw.workers.esmfold2", "--manifest", "/mnt/disks/input/manifest.json"]

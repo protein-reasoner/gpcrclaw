@@ -28,8 +28,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image_name: fake-worker
-            dockerfile: Dockerfile.fake-worker
           - image_name: boltz2-worker
             dockerfile: Dockerfile.boltz2
           - image_name: thermompnn-worker

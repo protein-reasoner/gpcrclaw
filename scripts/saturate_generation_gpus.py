@@ -8,6 +8,7 @@ import sys
 import time
 import uuid
 from dataclasses import dataclass
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,7 @@ ACTIVE_STATES = {"QUEUED", "SCHEDULED", "RUNNING", "ASSIGNED", "PENDING"}
 
 @dataclass(frozen=True)
 class SlotPlan:
+    region: str
     lane: str
     preemptible: bool
     target_gpus: int
@@ -40,6 +42,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Keep Google Batch A100 generation jobs saturated without waiting for outputs.")
     parser.add_argument("--manifest", type=Path, default=ROOT / "examples/rfantibody/lpar1_generation_manifest.json")
     parser.add_argument("--live", action="store_true", help="Run RFantibody live; omit for contract-only dry-run generation.")
+    parser.add_argument("--regions", default="", help="Comma-separated Batch regions. Defaults to GPCRCLAW_REGION.")
     parser.add_argument("--standard-gpus", type=int, default=16, help="Target standard A100 GPUs to keep queued/running.")
     parser.add_argument("--spot-gpus", type=int, default=64, help="Target Spot/preemptible A100 GPUs to keep queued/running.")
     parser.add_argument("--gpu-count-per-job", type=int, default=1, choices=[1, 2, 4, 8])
@@ -54,6 +57,7 @@ def main() -> int:
 
     load_env_file()
     config = GpcrClawConfig.from_env()
+    regions = [item.strip() for item in args.regions.split(",") if item.strip()] or [config.region]
     wave_id = slugify(args.wave_id or f"wave-{utc_now().replace(':', '').replace('-', '').lower().replace('z', '')}")[:32]
     run_id = slugify(args.run_id or wave_id)[:48]
     run_dir = ROOT / ".gpcrclaw" / "runs" / run_id
@@ -64,15 +68,19 @@ def main() -> int:
 
     total_submitted = 0
     while True:
-        active = active_fleet_jobs(config.region)
-        plans = [
-            SlotPlan("standard", False, args.standard_gpus),
-            SlotPlan("spot", True, args.spot_gpus),
-        ]
+        active = {region: active_fleet_jobs(region) for region in regions}
+        plans = []
+        for region in regions:
+            plans.extend(
+                [
+                    SlotPlan(region, "standard", False, args.standard_gpus),
+                    SlotPlan(region, "spot", True, args.spot_gpus),
+                ]
+            )
         submitted = []
         for plan in plans:
             target_jobs = plan.target_gpus // args.gpu_count_per_job
-            active_jobs = active.get(plan.lane, 0)
+            active_jobs = active.get(plan.region, {}).get(plan.lane, 0)
             to_submit = max(0, target_jobs - active_jobs)
             if args.max_submit is not None:
                 remaining = max(0, args.max_submit - total_submitted)
@@ -80,10 +88,11 @@ def main() -> int:
             for index in range(to_submit):
                 job_index = active_jobs + index + 1
                 job = build_generation_job(
-                    config,
+                    replace(config, region=plan.region),
                     manifest_template,
                     source_manifest=args.manifest,
                     wave_id=wave_id,
+                    region=plan.region,
                     lane=plan.lane,
                     job_index=job_index,
                     live=args.live,
@@ -92,8 +101,16 @@ def main() -> int:
                     candidates_per_job=args.candidates_per_job,
                 )
                 if not args.plan_only:
-                    submit_generation_job(config, job)
-                    append_submission(submitted_path, job, wave_id=wave_id, lane=plan.lane, live=args.live, candidates_per_job=args.candidates_per_job)
+                    submit_generation_job(replace(config, region=plan.region), job)
+                    append_submission(
+                        submitted_path,
+                        job,
+                        wave_id=wave_id,
+                        region=plan.region,
+                        lane=plan.lane,
+                        live=args.live,
+                        candidates_per_job=args.candidates_per_job,
+                    )
                 submitted.append(job["job_name"])
                 total_submitted += 1
         print(
@@ -154,6 +171,7 @@ def build_generation_job(
     *,
     source_manifest: Path,
     wave_id: str,
+    region: str,
     lane: str,
     job_index: int,
     live: bool,
@@ -162,8 +180,9 @@ def build_generation_job(
     candidates_per_job: int,
 ) -> dict[str, Any]:
     manifest = json.loads(json.dumps(manifest_template))
+    region_slug = region.replace("-", "")
     tail = uuid.uuid4().hex[:6]
-    job_name = unique_job_name("gpcrclaw-rfab", wave_id, lane, job_index, tail)
+    job_name = unique_job_name("gpcrclaw-rfab", wave_id, region_slug, lane, job_index, tail)
     campaign_id = manifest["campaign_id"] = job_name.replace("-", "_").upper()
     manifest["job_id"] = f"job_generation_{lane}_{job_index:04d}"
     manifest["batch_id"] = f"batch_generation_{wave_id}"
@@ -196,11 +215,11 @@ def build_generation_job(
         output_uri=output_uri,
         timeout_minutes=max(config.timeout_minutes, 240),
         max_retries=config.max_retries,
-        labels={"worker": "rfantibody", "gpu": "a100", "fleet": FLEET_LABEL, "lane": lane, "wave": wave_id},
+        labels={"worker": "rfantibody", "gpu": "a100", "fleet": FLEET_LABEL, "lane": lane, "wave": wave_id, "region": region_slug},
         restartable=True,
         preemptible=preemptible,
     )
-    work_dir = ROOT / ".gpcrclaw" / "generation-fleet" / wave_id / job_name
+    work_dir = ROOT / ".gpcrclaw" / "generation-fleet" / wave_id / region / job_name
     work_dir.mkdir(parents=True, exist_ok=True)
     staged_manifest = prepare_manifest_for_batch(manifest, source_manifest=source_manifest, work_dir=work_dir)
     manifest_path = work_dir / "manifest.json"
@@ -215,6 +234,7 @@ def build_generation_job(
         "manifest_path": manifest_path,
         "asset_root": work_dir / "input_assets",
         "config_path": config_path,
+        "region": region,
         "lane": lane,
         "preemptible": preemptible,
         "gpu_count": gpu_count,
@@ -222,8 +242,8 @@ def build_generation_job(
     }
 
 
-def unique_job_name(prefix: str, wave_id: str, lane: str, job_index: int, tail: str) -> str:
-    suffix = f"{lane}-{job_index:04d}-{tail}"
+def unique_job_name(prefix: str, wave_id: str, region_slug: str, lane: str, job_index: int, tail: str) -> str:
+    suffix = f"{region_slug}-{lane}-{job_index:04d}-{tail}"
     prefix_part = slugify(f"{prefix}-{wave_id}")
     max_prefix = 63 - len(suffix) - 1
     return f"{prefix_part[:max_prefix].rstrip('-')}-{suffix}"
@@ -234,13 +254,14 @@ def submit_generation_job(config: GpcrClawConfig, job: dict[str, Any]) -> None:
     run(["gcloud", "batch", "jobs", "submit", job["job_name"], "--location", config.region, "--config", str(job["config_path"])])
 
 
-def append_submission(path: Path, job: dict[str, Any], *, wave_id: str, lane: str, live: bool, candidates_per_job: int) -> None:
+def append_submission(path: Path, job: dict[str, Any], *, wave_id: str, region: str, lane: str, live: bool, candidates_per_job: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     record = {
         "submitted_at": utc_now(),
         "job_name": job["job_name"],
         "campaign_id": job["campaign_id"],
         "wave_id": wave_id,
+        "region": region,
         "lane": lane,
         "live": live,
         "candidate_count": candidates_per_job,
