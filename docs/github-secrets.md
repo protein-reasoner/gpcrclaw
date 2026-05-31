@@ -29,8 +29,11 @@ The workflow uses those values to push:
 ```text
 us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/fake-worker:<tag>
 us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:<tag>
+us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/thermompnn-worker:<tag>
 us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/chai1-worker:<tag>
 us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/immunebuilder-worker:<tag>
+us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/rfantibody-worker:<tag>
+us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/esmfold2-worker:<tag>
 ```
 
 Each image is tagged with both `sha-<commit-sha>` and `latest`.
@@ -40,8 +43,11 @@ The workflow uses the checked-in Dockerfiles directly:
 ```text
 fake-worker -> Dockerfile.fake-worker
 boltz2-worker -> Dockerfile.boltz2
+thermompnn-worker -> Dockerfile.thermompnn
 chai1-worker -> Dockerfile.chai1
 immunebuilder-worker -> Dockerfile.immunebuilder
+rfantibody-worker -> Dockerfile.rfantibody
+esmfold2-worker -> Dockerfile.esmfold2
 ```
 
 ## Required GitHub Secrets

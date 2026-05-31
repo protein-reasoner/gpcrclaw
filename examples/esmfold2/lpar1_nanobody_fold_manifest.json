@@ -1,0 +1,34 @@
+{
+  "batch_id": "batch_esmfold2_example",
+  "campaign_id": "LPAR1_ESMFOLD2_EXAMPLE",
+  "candidate": {
+    "candidate_id": "LPAR1_RFNB_EXAMPLE",
+    "cdr3": "CARDSTYW",
+    "sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAISWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNAKNTLYLQMNSLRAEDTAVYYCARDSTYWWGQGTQVTVSS"
+  },
+  "evidence_mode": "live",
+  "job_id": "job_esmfold2_example",
+  "output_uri": "local://.gpcrclaw/examples/esmfold2/output",
+  "resources": {
+    "gpu_count": 1,
+    "gpu_type": "A100"
+  },
+  "target": {
+    "epitope": "ECL2",
+    "sequence": "MPNSTTVMEGNVTVVLGQPAGVLLVGLALGLSLLVLVLWRRRGWCRCRRPSGSRVPSAAGCPRHRRRWAGLPLVFLVVAVYVVGWVGNALYLLLVLQGQGHTRLGNLYWLLLALAGLPLSLLLAVCRHLCGPGGQGRLRLGPGQDGPRGRLQGQGQGQGL",
+    "target_id": "LPAR1"
+  },
+  "worker_name": "esmfold2",
+  "worker_options": {
+    "esmfold2": {
+      "candidate_chain_id": "B",
+      "dry_run": true,
+      "include_target": false,
+      "model_id": "biohub/ESMFold2",
+      "num_diffusion_samples": 1,
+      "num_loops": 3,
+      "num_sampling_steps": 50
+    }
+  },
+  "worker_version": "0.1.0"
+}

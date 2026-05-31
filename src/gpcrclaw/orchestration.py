@@ -23,6 +23,7 @@ TOOL_STAGE = {
     "rfantibody": "candidate_generation",
     "boltz2": "complex_scoring",
     "chai1": "complex_scoring",
+    "esmfold2": "complex_scoring",
     "thermompnn": "stability_scoring",
     "immunebuilder": "loop_qc",
 }
@@ -389,6 +390,12 @@ def _drop_reasons(candidate: Candidate) -> list[str]:
             reasons.append(f"{tool}:weak_complex_confidence")
         if complex_plddt is not None and complex_plddt < 50:
             reasons.append(f"{tool}:low_complex_plddt")
+    esmfold2_ptm = _metric_value(candidate, "esmfold2", "ptm")
+    esmfold2_plddt = _metric_value(candidate, "esmfold2", "mean_plddt")
+    if esmfold2_ptm is not None and esmfold2_ptm < 0.35:
+        reasons.append("esmfold2:weak_fold_confidence")
+    if esmfold2_plddt is not None and esmfold2_plddt < 50:
+        reasons.append("esmfold2:low_mean_plddt")
     max_ddg = _metric_value(candidate, "thermompnn", "max_ddg_pred")
     destabilizing_fraction = _metric_value(candidate, "thermompnn", "destabilizing_fraction")
     if max_ddg is not None and max_ddg > 2.0:

@@ -90,6 +90,12 @@ class WorkerContractTest(unittest.TestCase):
             ],
         )
 
+    def test_esmfold2_metric_schema_is_registered(self) -> None:
+        self.assertEqual(
+            MODEL_METRIC_SCHEMAS["esmfold2"]["required_metrics"],
+            ["mean_plddt", "ptm", "iptm", "sequence_length"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

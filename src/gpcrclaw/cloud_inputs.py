@@ -18,6 +18,9 @@ ASSET_KEY_HINTS = (
     "msa",
     "template",
     "structure",
+    "pdb",
+    "cif",
+    "fasta",
     "checkpoint",
     "weights",
     "constraints",
@@ -55,6 +58,11 @@ def batch_result_exit_code(final_state: str | None) -> int:
     if final_state is None or final_state == "SUCCEEDED":
         return 0
     return 1
+
+
+def batch_should_wait(wait: bool, no_wait: bool = False) -> bool:
+    """Return whether a Batch submitter should poll after submission."""
+    return wait and not no_wait
 
 
 def add_failure_hints(result: dict[str, Any], *, job_name: str, region: str) -> None:

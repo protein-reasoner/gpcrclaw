@@ -87,6 +87,12 @@ CHAI1_METRICS_SCHEMA = {
     "artifact_kinds": ["complex_structure", "raw_metrics", "chai_input", "worker_logs"],
 }
 
+ESMFOLD2_METRICS_SCHEMA = {
+    "tool": "esmfold2",
+    "required_metrics": ["mean_plddt", "ptm", "iptm", "sequence_length"],
+    "artifact_kinds": ["esmfold2_structure", "raw_metrics", "esmfold2_input", "worker_logs"],
+}
+
 MODEL_METRIC_SCHEMAS = {
     "fake_worker": {
         "required_metrics": ["interface_score", "specificity_margin", "developability_score"],
@@ -97,6 +103,7 @@ MODEL_METRIC_SCHEMAS = {
     "rfantibody": RFANTIBODY_GENERATION_SCHEMA,
     "immunebuilder": IMMUNEBUILDER_METRICS_SCHEMA,
     "chai1": CHAI1_METRICS_SCHEMA,
+    "esmfold2": ESMFOLD2_METRICS_SCHEMA,
 }
 
 

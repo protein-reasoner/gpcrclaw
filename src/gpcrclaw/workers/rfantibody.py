@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
+import os
 import random
 import shlex
 import shutil
@@ -48,6 +50,11 @@ def run_rfantibody_generation(
     work_dir = output_dir / "work"
     raw_output_dir = output_dir / "rfantibody_raw"
     options = rfantibody_options(manifest)
+    options.setdefault("raw_output_dir", str(raw_output_dir))
+    target = manifest.get("target")
+    if isinstance(target, dict):
+        options.setdefault("target_structure", target.get("structure_path") or target.get("receptor_structure_path"))
+        options.setdefault("hotspot_residues", target.get("hotspot_residues") or target.get("hotspots"))
 
     try:
         input_bundle = write_generation_inputs(manifest, work_dir, options)
@@ -115,8 +122,22 @@ def run_rfantibody_generation(
             results=results,
         )
     except WorkerContractError as exc:
-        _write_error(output_dir, manifest["job_id"], "rfantibody_output_missing", str(exc), retryable=False, commands=commands, results=results)
-        return EXIT_VALIDATION_ERROR
+        try:
+            candidates = discover_generated_candidates(raw_output_dir, manifest)
+            write_contract_outputs(
+                manifest,
+                output_dir,
+                candidates,
+                input_bundle,
+                commands,
+                source_mode="rfantibody_generated",
+                warnings=["normalized candidates were discovered from RFantibody output files."],
+                results=results,
+            )
+        except WorkerContractError as discovery_exc:
+            message = f"{exc}; discovery also failed: {discovery_exc}"
+            _write_error(output_dir, manifest["job_id"], "rfantibody_output_missing", message, retryable=False, commands=commands, results=results)
+            return EXIT_VALIDATION_ERROR
 
     return 0
 
@@ -183,7 +204,7 @@ def write_generation_inputs(manifest: dict[str, Any], work_dir: Path, options: d
 def configured_commands(options: dict[str, Any]) -> list[list[str]]:
     raw_commands = options.get("commands")
     if raw_commands is None:
-        return []
+        return default_rfantibody_commands(options)
     if not isinstance(raw_commands, list):
         raise WorkerContractError("worker_options.rfantibody.commands must be a list")
     commands: list[list[str]] = []
@@ -194,6 +215,41 @@ def configured_commands(options: dict[str, Any]) -> list[list[str]]:
             commands.append([str(part) for part in command])
         else:
             raise WorkerContractError("each RFAntibody command must be a shell string or argv list")
+    return commands
+
+
+def default_rfantibody_commands(options: dict[str, Any]) -> list[list[str]]:
+    target_structure = options.get("target_structure") or options.get("target_pdb")
+    framework_pdb = options.get("framework_pdb") or options.get("framework_path") or os.getenv("RFANTIBODY_FRAMEWORK_PDB")
+    if not target_structure or not framework_pdb:
+        return []
+    output_dir = Path(str(options.get("raw_output_dir", "rfantibody_raw")))
+    launcher = shlex.split(str(options.get("launcher", os.getenv("RFANTIBODY_LAUNCHER", "uv run"))))
+    count = str(int(options.get("num_candidates", options.get("num_candidates_to_generate", 8))))
+    hotspots = options.get("hotspot_residues") or options.get("hotspots") or []
+    hotspot_arg = ",".join(str(item) for item in hotspots) if isinstance(hotspots, list) else str(hotspots)
+    diffusion_qv = output_dir / "01_rfdiffusion.qv"
+    mpnn_qv = output_dir / "02_proteinmpnn.qv"
+    rf2_qv = output_dir / "03_rf2.qv"
+    commands = [
+        launcher
+        + [
+            "rfdiffusion",
+            "--target",
+            str(target_structure),
+            "--framework",
+            str(framework_pdb),
+            "--output-quiver",
+            str(diffusion_qv),
+            "--num-designs",
+            count,
+        ],
+        launcher + ["proteinmpnn", "--input-quiver", str(diffusion_qv), "--output-quiver", str(mpnn_qv)],
+        launcher + ["rf2", "--input-quiver", str(mpnn_qv), "--output-quiver", str(rf2_qv)],
+        launcher + ["qvextract", str(rf2_qv), "--output-dir", str(output_dir / "final_designs")],
+    ]
+    if hotspot_arg:
+        commands[0].extend(["--hotspots", hotspot_arg])
     return commands
 
 
@@ -273,6 +329,160 @@ def load_candidate_records(path: Path, manifest: dict[str, Any], raw_output_dir:
         candidate.setdefault("cdr3_length", len(str(candidate.get("cdr3", ""))))
         normalized.append(candidate)
     return normalized
+
+
+def discover_generated_candidates(raw_output_dir: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    for path in sorted(raw_output_dir.rglob("generated_candidates.json")):
+        return load_candidate_records(path, manifest, raw_output_dir)
+    for pattern in ("*.jsonl", "*.json"):
+        for path in sorted(raw_output_dir.rglob(pattern)):
+            try:
+                return load_candidate_records(path, manifest, raw_output_dir)
+            except WorkerContractError:
+                continue
+
+    score_rows = score_rows_by_stem(raw_output_dir)
+    records = []
+    for index, fasta_path in enumerate(sorted(raw_output_dir.rglob("*.fa*")), start=1):
+        for header, sequence in parse_fasta(fasta_path):
+            records.append(candidate_record_from_sequence(header, sequence, manifest, index, score_rows.get(Path(header).stem) or score_rows.get(fasta_path.stem), None))
+    if records:
+        return records
+
+    for index, pdb_path in enumerate(sorted(raw_output_dir.rglob("*.pdb")), start=1):
+        sequence = sequence_from_pdb(pdb_path)
+        if sequence:
+            records.append(candidate_record_from_sequence(pdb_path.stem, sequence, manifest, index, score_rows.get(pdb_path.stem), pdb_path))
+    if records:
+        return records
+    raise WorkerContractError(f"no generated candidate JSON, FASTA, or PDB outputs found under {raw_output_dir}")
+
+
+def candidate_record_from_sequence(
+    candidate_id: str,
+    sequence: str,
+    manifest: dict[str, Any],
+    index: int,
+    score_row: dict[str, Any] | None,
+    structure_path: Path | None,
+) -> dict[str, Any]:
+    target = _mapping(manifest.get("target"), "manifest target")
+    target_id = str(target.get("target_id", target.get("id", "TARGET")))
+    record = {
+        "candidate_id": candidate_id,
+        "target": target_id,
+        "target_id": target_id,
+        "sequence": sequence,
+        "cdr3": "",
+        "cdr3_length": 0,
+        "source": "rfantibody_generated",
+        "target_epitope": str(target.get("epitope", "ECL2")),
+        "generation_rank": index,
+    }
+    if structure_path is not None:
+        record["structure_path"] = str(structure_path)
+    if score_row:
+        for key, value in score_row.items():
+            if isinstance(value, (float, int)):
+                record.setdefault("rfantibody_design_score", float(value))
+                break
+    return record
+
+
+def parse_fasta(path: Path) -> list[tuple[str, str]]:
+    records: list[tuple[str, str]] = []
+    header = ""
+    chunks: list[str] = []
+    for line in path.read_text().splitlines():
+        if line.startswith(">"):
+            if header and chunks:
+                records.append((header, _clean_sequence("".join(chunks))))
+            header = line[1:].strip().split()[0] or path.stem
+            chunks = []
+        else:
+            chunks.append(line.strip())
+    if header and chunks:
+        records.append((header, _clean_sequence("".join(chunks))))
+    return records
+
+
+def score_rows_by_stem(raw_output_dir: Path) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for path in sorted(raw_output_dir.rglob("*")):
+        if path.suffix.lower() not in {".csv", ".tsv", ".sc", ".score", ".scorefile"}:
+            continue
+        delimiter = "\t" if path.suffix.lower() == ".tsv" else None
+        try:
+            parsed = parse_score_rows(path, delimiter=delimiter)
+        except Exception:
+            continue
+        for row in parsed:
+            key = str(row.get("candidate_id") or row.get("description") or row.get("name") or row.get("id") or "").strip()
+            if key:
+                rows[Path(key).stem] = row
+    return rows
+
+
+def parse_score_rows(path: Path, *, delimiter: str | None) -> list[dict[str, Any]]:
+    text = [line for line in path.read_text().splitlines() if line.strip() and not line.startswith("#")]
+    if not text:
+        return []
+    if delimiter is None and path.suffix.lower() in {".sc", ".score", ".scorefile"}:
+        header = text[0].split()
+        rows = []
+        for line in text[1:]:
+            parts = line.split()
+            if len(parts) == len(header):
+                rows.append({key: _coerce_number(value) for key, value in zip(header, parts)})
+        return rows
+    reader = csv.DictReader(text, delimiter=delimiter or ",")
+    return [{key: _coerce_number(value) for key, value in row.items()} for row in reader]
+
+
+RESIDUE_CODES = {
+    "ALA": "A",
+    "ARG": "R",
+    "ASN": "N",
+    "ASP": "D",
+    "CYS": "C",
+    "GLN": "Q",
+    "GLU": "E",
+    "GLY": "G",
+    "HIS": "H",
+    "ILE": "I",
+    "LEU": "L",
+    "LYS": "K",
+    "MET": "M",
+    "PHE": "F",
+    "PRO": "P",
+    "SER": "S",
+    "THR": "T",
+    "TRP": "W",
+    "TYR": "Y",
+    "VAL": "V",
+}
+
+
+def sequence_from_pdb(path: Path) -> str:
+    residues = []
+    seen = set()
+    for line in path.read_text(errors="ignore").splitlines():
+        if not line.startswith("ATOM"):
+            continue
+        residue_id = line[21:27].strip()
+        if residue_id in seen:
+            continue
+        seen.add(residue_id)
+        residues.append(RESIDUE_CODES.get(line[17:20].strip().upper(), "X"))
+    return "".join(residues).strip("X")
+
+
+def _coerce_number(value: Any) -> Any:
+    try:
+        text = str(value)
+        return float(text) if "." in text or "e" in text.lower() else int(text)
+    except (TypeError, ValueError):
+        return value
 
 
 def write_contract_outputs(

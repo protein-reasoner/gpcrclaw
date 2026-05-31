@@ -13,8 +13,16 @@ input/manifest.json
 The worker does not change campaign orchestration or backend submission. A Google Batch request can use `worker_name: "rfantibody"`; the existing backend fallback resolves that to:
 
 ```text
-python -m gpcrclaw.workers.rfantibody --manifest /mnt/disks/input/manifest.json
+python3 -m gpcrclaw.workers.rfantibody --manifest /mnt/disks/input/manifest.json
 ```
+
+Cloud image:
+
+```text
+us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/rfantibody-worker:latest
+```
+
+The image is defined in `Dockerfile.rfantibody`. It installs the RosettaCommons RFantibody repository, runs `uv sync`, and downloads model weights during image build by default.
 
 ## Manifest Inputs
 
@@ -40,6 +48,8 @@ Generation-specific options live under `worker_options.rfantibody`:
 ```
 
 For interface and plumbing checks, set `dry_run: true` or pass `--dry-run`. This emits deterministic, clearly labeled interface candidates without running RFAntibody/RFdiffusion.
+
+For live mode, either provide explicit `commands` or provide `target.structure_path` plus `worker_options.rfantibody.framework_pdb` or the `RFANTIBODY_FRAMEWORK_PDB` environment variable. The worker runs the configured RFantibody pipeline commands, then normalizes generated candidates from `generated_candidates.json`, JSONL/JSON candidate tables, FASTA files, or extracted PDB files.
 
 ## Outputs For Boltz-2
 
@@ -93,3 +103,23 @@ python -m gpcrclaw.workers.rfantibody \
 ```
 
 This writes deterministic interface candidates under `.gpcrclaw/examples/rfantibody/output`. These are not real RFAntibody outputs and are labeled with source `rfantibody_interface_dry_run`.
+
+Build the cloud image:
+
+```bash
+gcloud builds submit --config cloudbuild.rfantibody.yaml .
+```
+
+Submit a Batch dry-run job:
+
+```bash
+python3 scripts/run_rfantibody_batch.py --manifest examples/rfantibody/lpar1_generation_manifest.json
+```
+
+Submit a live A100 generation job after the RFantibody target/framework inputs are set:
+
+```bash
+python3 scripts/run_rfantibody_batch.py \
+  --manifest examples/rfantibody/lpar1_generation_manifest.json \
+  --live
+```

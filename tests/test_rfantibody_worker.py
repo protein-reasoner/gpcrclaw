@@ -123,6 +123,27 @@ class RFAntibodyWorkerTest(unittest.TestCase):
             self.assertEqual(error["error_type"], "not_configured")
             self.assertFalse(error["retryable"])
 
+    def test_live_mode_discovers_fasta_outputs_when_normalized_table_is_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "output"
+            manifest_path = root / "input" / "manifest.json"
+            manifest = valid_manifest(output)
+            manifest["worker_options"]["rfantibody"]["commands"] = [["rfantibody-generate", "--out", str(output / "rfantibody_raw")]]
+            write_manifest(manifest_path, manifest)
+
+            def runner(args: list[str]) -> subprocess.CompletedProcess[str]:
+                raw = output / "rfantibody_raw" / "final_designs"
+                raw.mkdir(parents=True)
+                (raw / "LPAR1_RFNB_DISCOVERED_001.fasta").write_text(">LPAR1_RFNB_DISCOVERED_001\nEVQLVESGGGLVQPGGSLRLSCAASGFTFSSYA\n")
+                return subprocess.CompletedProcess(args, 0, "ok\n", "")
+
+            self.assertEqual(run_rfantibody_generation(manifest_path, runner=runner), 0)
+
+            metrics = json.loads((output / "metrics.json").read_text())
+            self.assertEqual(metrics["candidates"][0]["candidate_id"], "LPAR1_RFNB_DISCOVERED_001")
+            self.assertEqual(metrics["candidates"][0]["sequence"], "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYA")
+
     def test_rfantibody_metric_schema_is_registered(self) -> None:
         self.assertEqual(MODEL_METRIC_SCHEMAS["rfantibody"]["required_metrics"], ["generation_rank", "cdr3_length", "sequence_length"])
 

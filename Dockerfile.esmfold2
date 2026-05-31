@@ -1,0 +1,29 @@
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        git \
+        python3 \
+        python3-dev \
+        python3-pip \
+    && ln -sf /usr/bin/python3 /usr/local/bin/python \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY pyproject.toml /app/
+COPY src /app/src
+
+ENV PYTHONPATH=/app/src
+ENV HF_HOME=/models/huggingface
+ENV ESMFOLD2_MODEL_ID=biohub/ESMFold2
+ENV ESMFOLD2_DEVICE=cuda
+
+ARG ESMFOLD2_REF=c94ed8d
+RUN python3 -m pip install --no-cache-dir --upgrade pip \
+    && python3 -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu124 torch \
+    && python3 -m pip install --no-cache-dir "esm@git+https://github.com/Biohub/esm.git@${ESMFOLD2_REF}"
+
+CMD ["python3", "-m", "gpcrclaw.workers.esmfold2", "--manifest", "/mnt/disks/input/manifest.json"]

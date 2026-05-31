@@ -32,10 +32,16 @@ jobs:
             dockerfile: Dockerfile.fake-worker
           - image_name: boltz2-worker
             dockerfile: Dockerfile.boltz2
+          - image_name: thermompnn-worker
+            dockerfile: Dockerfile.thermompnn
           - image_name: chai1-worker
             dockerfile: Dockerfile.chai1
           - image_name: immunebuilder-worker
             dockerfile: Dockerfile.immunebuilder
+          - image_name: esmfold2-worker
+            dockerfile: Dockerfile.esmfold2
+          - image_name: rfantibody-worker
+            dockerfile: Dockerfile.rfantibody
     env:
       GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
       GCP_REGION: ${{ vars.GCP_REGION }}

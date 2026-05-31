@@ -86,9 +86,31 @@ gpcrclaw-a100-parallel-1-20260531003434 -> SUCCEEDED
 gpcrclaw-a100-parallel-2-20260531003434 -> SUCCEEDED
 ```
 
-## Boltz-2 Gate
+## Primary Design Workers
 
-The first real model hook now has a dedicated worker wrapper and container definition. Before trusting live Boltz-2 results:
+RFantibody and ESMFold2 are the primary real model workers for the design path.
+
+Build and publish:
+
+```bash
+gcloud builds submit --config cloudbuild.rfantibody.yaml .
+gcloud builds submit --config cloudbuild.esmfold2.yaml .
+```
+
+Submit dry-run Batch jobs without launching inference:
+
+```bash
+python3 scripts/run_rfantibody_batch.py --manifest examples/rfantibody/lpar1_generation_manifest.json
+python3 scripts/run_esmfold2_batch.py --manifest examples/esmfold2/lpar1_nanobody_fold_manifest.json
+```
+
+Live RFantibody requires `target.structure_path` and either explicit `worker_options.rfantibody.commands` or a valid RFantibody framework path through `worker_options.rfantibody.framework_pdb` / `RFANTIBODY_FRAMEWORK_PDB`.
+
+Live ESMFold2 uses `biohub/ESMFold2` by default. Use `--include-target` only when the manifest has both target and candidate sequences and the desired model run is target:candidate folding.
+
+## Boltz-2 Verifier Gate
+
+Boltz-2 remains available as a downstream complex verifier. Before trusting live Boltz-2 results:
 
 - Confirm model license and weight access.
 - Build a separate Boltz-2 container image.
