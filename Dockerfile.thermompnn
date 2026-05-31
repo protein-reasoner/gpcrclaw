@@ -18,7 +18,7 @@ RUN apt-get update \
 RUN curl -fsSL https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -o /tmp/miniforge.sh \
     && bash /tmp/miniforge.sh -b -p "$CONDA_DIR" \
     && rm /tmp/miniforge.sh \
-    && conda config --system --set channel_priority strict
+    && conda config --system --set channel_priority flexible
 
 RUN git clone --depth 1 https://github.com/Kuhlman-Lab/ThermoMPNN.git "$THERMOMPNN_REPO"
 

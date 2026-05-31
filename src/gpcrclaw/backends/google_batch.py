@@ -10,6 +10,11 @@ from gpcrclaw.config import GpcrClawConfig
 
 BATCH_INPUT_MOUNT = "/mnt/disks/input"
 BATCH_OUTPUT_MOUNT = "/mnt/disks/output"
+A100_ALLOWED_ZONES = {
+    "us-central1": ["a", "b", "c", "f"],
+    "us-east1": ["b"],
+    "us-west1": ["b"],
+}
 
 
 @dataclass
@@ -80,6 +85,7 @@ def build_batch_job_payload(config: GpcrClawConfig, request: GpuJobRequest) -> d
     max_seconds = request.timeout_minutes * 60
     labels = {"namespace": config.namespace, "campaign": request.campaign_id.lower().replace("_", "-")[:63]}
     labels.update({key: value.lower().replace("_", "-")[:63] for key, value in request.labels.items()})
+    allowed_locations = allowed_gpu_locations(config.region, request.gpu_type)
     return {
         "taskGroups": [
             {
@@ -106,18 +112,19 @@ def build_batch_job_payload(config: GpcrClawConfig, request: GpuJobRequest) -> d
         "allocationPolicy": {
             "instances": [{"installGpuDrivers": True, "policy": policy}],
             "serviceAccount": {"email": config.service_account_email},
-            "location": {
-                "allowedLocations": [
-                    f"zones/{config.region}-a",
-                    f"zones/{config.region}-b",
-                    f"zones/{config.region}-c",
-                    f"zones/{config.region}-f",
-                ]
-            },
+            "location": {"allowedLocations": allowed_locations},
         },
         "logsPolicy": {"destination": "CLOUD_LOGGING"},
         "labels": labels,
     }
+
+
+def allowed_gpu_locations(region: str, gpu_type: str) -> list[str]:
+    if gpu_type.upper() == "A100":
+        zones = A100_ALLOWED_ZONES.get(region)
+        if zones:
+            return [f"zones/{region}-{zone}" for zone in zones]
+    return [f"zones/{region}-a", f"zones/{region}-b", f"zones/{region}-c", f"zones/{region}-f"]
 
 
 def worker_module(worker_name: str) -> str:
