@@ -22,6 +22,7 @@ concurrency:
 jobs:
   model-worker:
     name: Build and push ${{ matrix.image_name }}
+    if: ${{ vars.GCP_PROJECT_ID != '' && vars.GCP_REGION != '' && vars.GAR_REPOSITORY != '' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GCP_SERVICE_ACCOUNT_EMAIL != '' }}
     runs-on: ubuntu-latest
     environment: model-workers
     strategy:
