@@ -108,6 +108,48 @@ Live RFantibody requires `target.structure_path` and either explicit `worker_opt
 
 Live ESMFold2 uses `biohub/ESMFold2` by default. Use `--include-target` only when the manifest has both target and candidate sequences and the desired model run is target:candidate folding.
 
+### Saturating A100 Generation Capacity
+
+Use the fleet launcher to keep Batch queued/running jobs up to the current A100 quota. It is submit-only by default and writes `.gpcrclaw/runs/{run_id}/submitted.jsonl`; it does not wait for model outputs.
+
+Plan a full us-central1 wave:
+
+```bash
+python3 scripts/saturate_generation_gpus.py \
+  --manifest examples/rfantibody/lpar1_generation_manifest.json \
+  --live \
+  --standard-gpus 16 \
+  --spot-gpus 64 \
+  --candidates-per-job 64 \
+  --plan-only
+```
+
+Submit the wave:
+
+```bash
+python3 scripts/saturate_generation_gpus.py \
+  --manifest examples/rfantibody/lpar1_generation_manifest.json \
+  --live \
+  --standard-gpus 16 \
+  --spot-gpus 64 \
+  --candidates-per-job 64 \
+  --run-id lpar1-rfab-a100
+```
+
+Continuously refill capacity every five minutes:
+
+```bash
+python3 scripts/saturate_generation_gpus.py \
+  --manifest examples/rfantibody/lpar1_generation_manifest.json \
+  --live \
+  --standard-gpus 16 \
+  --spot-gpus 64 \
+  --candidates-per-job 64 \
+  --run-id lpar1-rfab-a100 \
+  --continuous \
+  --interval-seconds 300
+```
+
 ## Boltz-2 Verifier Gate
 
 Boltz-2 remains available as a downstream complex verifier. Before trusting live Boltz-2 results:

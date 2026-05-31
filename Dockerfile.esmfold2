@@ -29,14 +29,7 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip \
 
 RUN mkdir -p "${HF_HOME}" \
     && if [ "${PREWARM_ESMFOLD2_WEIGHTS}" = "true" ]; then \
-        python3 - <<'PY'; \
-import os
-from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model
-
-model_id = os.environ.get("ESMFOLD2_MODEL_ID", "biohub/ESMFold2")
-ESMFold2Model.from_pretrained(model_id)
-print(f"prewarmed {model_id}")
-PY
+        python3 -c "import os; from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model; model_id = os.environ.get('ESMFOLD2_MODEL_ID', 'biohub/ESMFold2'); ESMFold2Model.from_pretrained(model_id); print(f'prewarmed {model_id}')" ; \
     fi
 
 CMD ["python3", "-m", "gpcrclaw.workers.esmfold2", "--manifest", "/mnt/disks/input/manifest.json"]
