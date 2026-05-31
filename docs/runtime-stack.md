@@ -32,7 +32,9 @@ src/gpcrclaw/
     retry.py               bounded retry helper
   workers/
     fake_worker.py         contract-compliant fake worker
-    boltz2_placeholder.py  not-yet-configured real-model hook
+    boltz2_placeholder.py  not-yet-configured model gate
+    boltz2_live.py         Boltz-2 manifest wrapper and output parser
+    boltz2.py              legacy placeholder module alias
 ```
 
 ## Configuration
@@ -51,6 +53,9 @@ GPCRCLAW_ARTIFACT_ROOT=.gpcrclaw/artifacts
 GPCRCLAW_BUCKET=gpcrclaw-artifacts
 GPCRCLAW_ARTIFACT_PREFIX=campaigns/alankrit
 GPCRCLAW_CONTAINER_IMAGE=us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/fake-worker:latest
+GPCRCLAW_BOLTZ2_CONTAINER_IMAGE=us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:latest
+GPCRCLAW_MODEL_ARTIFACT_ROOT=gs://gpcrclaw-artifacts/models
+GPCRCLAW_SERVICE_ACCOUNT_EMAIL=gpcrclaw-batch-worker@build-wgemini26sfo-2005.iam.gserviceaccount.com
 GPCRCLAW_STANDARD_A100_LIMIT=12
 GPCRCLAW_PREEMPTIBLE_A100_LIMIT=48
 GPCRCLAW_L4_LIMIT=8

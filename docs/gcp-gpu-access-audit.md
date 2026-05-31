@@ -69,7 +69,26 @@ run.googleapis.com
 storage.googleapis.com
 ```
 
-No GPU jobs, buckets, Artifact Registry repos, or VMs were created during this audit.
+Initial audit note: no GPU jobs, buckets, Artifact Registry repos, or VMs were created during the first quota discovery pass.
+
+Follow-up setup created the first GPCRclaw execution resources:
+
+```text
+bucket: gs://gpcrclaw-artifacts
+artifact registry repo: us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw
+service account: gpcrclaw-batch-worker@build-wgemini26sfo-2005.iam.gserviceaccount.com
+fake worker image: us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/fake-worker:latest
+```
+
+The Batch worker service account has the first-pass roles needed for smoke execution:
+
+```text
+roles/batch.jobsEditor
+roles/batch.agentReporter
+roles/logging.logWriter
+roles/storage.objectAdmin
+roles/artifactregistry.reader
+```
 
 ## Official Service Constraints
 
@@ -238,10 +257,53 @@ This is **not guaranteed usable capacity**. It is only the sum of regional quota
 - global GPU quota if enforced,
 - zone availability,
 - Batch capacity,
+- service-account permissions,
 - machine-type compatibility,
 - CPU quota,
 - whether the chosen GPU family has usable quota in that region,
-- whether the workload can tolerate Spot/preemptible eviction.
+- whether the workload can tolerate Spot/preemptible eviction,
+- correct worker container and Cloud Storage mount configuration.
+
+## Cloud Smoke Results
+
+The first Google Batch execution path is validated in `us-central1`.
+
+Successful jobs:
+
+```text
+L4 smoke:
+  job: gpcrclaw-l4-smoke-20260531t002900
+  state: SUCCEEDED
+  output: gs://gpcrclaw-artifacts/campaigns/alankrit/GPCRCLAW_L4_SMOKE_20260531T002900/batches/batch_smoke/jobs/job_smoke/output/
+
+A100 smoke:
+  job: gpcrclaw-a100-smoke-20260531t003141
+  state: SUCCEEDED
+  output: gs://gpcrclaw-artifacts/campaigns/alankrit/GPCRCLAW_A100_SMOKE_20260531T003141/batches/batch_smoke/jobs/job_smoke/output/
+
+Parallel A100 smoke:
+  job: gpcrclaw-a100-parallel-1-20260531003434
+  state: SUCCEEDED
+  output: gs://gpcrclaw-artifacts/campaigns/alankrit/GPCRCLAW_A100_PARALLEL_1_20260531003434/batches/batch_smoke/jobs/job_smoke/output/
+
+  job: gpcrclaw-a100-parallel-2-20260531003434
+  state: SUCCEEDED
+  output: gs://gpcrclaw-artifacts/campaigns/alankrit/GPCRCLAW_A100_PARALLEL_2_20260531003434/batches/batch_smoke/jobs/job_smoke/output/
+```
+
+Each successful smoke wrote:
+
+```text
+artifacts.json
+logs.txt
+metrics.json
+structures/LPAR1_NB_CLOUD_SMOKE_complex.pdb
+```
+
+Important fixes discovered during smoke:
+
+- Batch VM agent reporting required `roles/batch.agentReporter` on the worker service account.
+- Batch GCSFuse mounts must use writable paths under `/mnt/disks/...`; mounting directly at `/mnt/input` failed on the COS GPU VM.
 
 ## How To Use Current Capacity Fully
 
