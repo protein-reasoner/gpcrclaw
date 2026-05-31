@@ -31,8 +31,25 @@ http://localhost:3000
 3. The campaign compiles target, hotspot, VHH, and CDR3 constraints into an inspectable job.
 4. Click `Run local loop`.
 5. The loop moves through generation, validation, a failed candidate, retry/regeneration, and final ranked candidates.
-6. Open `Demo Campaign` to show the ranked candidate table with CDR3 length and scoring columns.
+6. Open `Demo Campaign` to show the ranked candidate table with CDR3 length, `ipSAE`, `ipTM`, epitope-contact score, and final rank score.
 7. State the boundary clearly: this is local artifact-backed demo evidence, not live experimental or clinical validation.
+
+## Scoring
+
+The local demo uses the same shape as the intended full scoring rule:
+
+```text
+interface_confidence = 0.60 * ipSAE + 0.40 * ipTM
+
+rank_score =
+  0.35 * interface_confidence
+  + 0.25 * epitope_contact_score
+  + 0.15 * pose_consistency_score
+  + 0.15 * specificity_score
+  + 0.10 * developability_score
+```
+
+`ipSAE` and `ipTM` are normalized to `0.0-1.0` in the demo table, where higher is better. The epitope-contact score represents how many intended LPAR1 ECL2 hotspots are contacted.
 
 ## Showable Artifacts
 

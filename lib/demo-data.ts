@@ -10,6 +10,40 @@ export const demoCampaign = {
   artifactRoot: ".gpcrclaw/examples/rfantibody/output"
 } as const;
 
+export const scoreWeights = {
+  interfaceConfidence: 0.35,
+  epitopeContacts: 0.25,
+  poseConsistency: 0.15,
+  specificity: 0.15,
+  developability: 0.1
+} as const;
+
+function interfaceConfidence(ipSAE: number, ipTM: number) {
+  return round4(0.6 * ipSAE + 0.4 * ipTM);
+}
+
+function rankScore(candidate: {
+  ipSAE: number;
+  ipTM: number;
+  epitopeContactScore: number;
+  poseConsistencyScore: number;
+  specificityScore: number;
+  developabilityScore: number;
+}) {
+  const interfaceScore = interfaceConfidence(candidate.ipSAE, candidate.ipTM);
+  return round4(
+    scoreWeights.interfaceConfidence * interfaceScore +
+      scoreWeights.epitopeContacts * candidate.epitopeContactScore +
+      scoreWeights.poseConsistency * candidate.poseConsistencyScore +
+      scoreWeights.specificity * candidate.specificityScore +
+      scoreWeights.developability * candidate.developabilityScore
+  );
+}
+
+function round4(value: number) {
+  return Math.round(value * 10000) / 10000;
+}
+
 export const pipelineStages = [
   {
     name: "Compile target brief",
@@ -34,10 +68,21 @@ export const rankedCandidates = [
     id: "LPAR1_RFNB_001",
     cdr3: "VRRTWHGTSYGERLFDV",
     cdr3Length: 17,
-    interfaceScore: 0.863,
-    specificityMargin: 0.4,
+    ipSAE: 0.82,
+    ipTM: 0.76,
+    interfaceConfidence: interfaceConfidence(0.82, 0.76),
+    epitopeContactScore: 0.8,
+    poseConsistencyScore: 0.78,
+    specificityScore: 0.7,
     developabilityScore: 0.842,
-    rankScore: 0.7017,
+    rankScore: rankScore({
+      ipSAE: 0.82,
+      ipTM: 0.76,
+      epitopeContactScore: 0.8,
+      poseConsistencyScore: 0.78,
+      specificityScore: 0.7,
+      developabilityScore: 0.842
+    }),
     artifactPath: ".gpcrclaw/examples/rfantibody/output/structures/LPAR1_RFNB_001_binder.pdb"
   },
   {
@@ -45,10 +90,21 @@ export const rankedCandidates = [
     id: "LPAR1_RFNB_004",
     cdr3: "LSADRKQVDKMIT",
     cdr3Length: 13,
-    interfaceScore: 0.817,
-    specificityMargin: 0.363,
+    ipSAE: 0.76,
+    ipTM: 0.72,
+    interfaceConfidence: interfaceConfidence(0.76, 0.72),
+    epitopeContactScore: 0.6,
+    poseConsistencyScore: 0.72,
+    specificityScore: 0.66,
     developabilityScore: 0.767,
-    rankScore: 0.649,
+    rankScore: rankScore({
+      ipSAE: 0.76,
+      ipTM: 0.72,
+      epitopeContactScore: 0.6,
+      poseConsistencyScore: 0.72,
+      specificityScore: 0.66,
+      developabilityScore: 0.767
+    }),
     artifactPath: ".gpcrclaw/examples/rfantibody/output/structures/LPAR1_RFNB_004_binder.pdb"
   },
   {
@@ -56,10 +112,21 @@ export const rankedCandidates = [
     id: "LPAR1_RFNB_002",
     cdr3: "YPRYGYATDC",
     cdr3Length: 10,
-    interfaceScore: 0.792,
-    specificityMargin: 0.311,
+    ipSAE: 0.71,
+    ipTM: 0.68,
+    interfaceConfidence: interfaceConfidence(0.71, 0.68),
+    epitopeContactScore: 0.6,
+    poseConsistencyScore: 0.67,
+    specificityScore: 0.61,
     developabilityScore: 0.751,
-    rankScore: 0.618,
+    rankScore: rankScore({
+      ipSAE: 0.71,
+      ipTM: 0.68,
+      epitopeContactScore: 0.6,
+      poseConsistencyScore: 0.67,
+      specificityScore: 0.61,
+      developabilityScore: 0.751
+    }),
     artifactPath: ".gpcrclaw/examples/rfantibody/output/structures/LPAR1_RFNB_002_binder.pdb"
   }
 ] as const;

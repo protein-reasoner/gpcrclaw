@@ -1171,6 +1171,89 @@ p {
   font-size: 0.95rem;
 }
 
+.scoring-section {
+  margin: 36px 0 42px;
+}
+
+.scoring-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.scoring-grid article,
+.formula-panel {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.scoring-grid article {
+  padding: 18px;
+}
+
+.scoring-grid strong {
+  display: block;
+  font-size: 0.94rem;
+  margin-bottom: 8px;
+}
+
+.scoring-grid p {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.52;
+  margin: 0;
+}
+
+.formula-panel {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  padding: 22px;
+}
+
+.formula-panel h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.formula-panel pre {
+  background: #101510;
+  border-radius: calc(var(--radius) - 2px);
+  color: #e9f3e8;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  margin: 0;
+  overflow-x: auto;
+  padding: 16px;
+}
+
+.formula-panel dl {
+  display: grid;
+  gap: 10px;
+}
+
+.formula-panel dl div {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
+
+.formula-panel dt {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.formula-panel dd {
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
 .table-head {
   background: #eef2ed;
   color: var(--muted);
@@ -1247,6 +1330,8 @@ p {
   .runtime-stack,
   .runtime-model-grid,
   .run-summary,
+  .scoring-grid,
+  .formula-panel,
   .run-output-grid {
     grid-template-columns: 1fr;
   }

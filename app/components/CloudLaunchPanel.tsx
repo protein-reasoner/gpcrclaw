@@ -23,6 +23,8 @@ type DemoRunCandidate = {
 type FinalCandidate = {
   rank: number;
   id: string;
+  ipSAE: number;
+  ipTM: number;
   rankScore: number;
 };
 
@@ -498,7 +500,7 @@ function RunTimeline({ run }: { run: DemoRun }) {
             run.finalReturnedResult.map((candidate) => (
               <p className="final-candidate" key={candidate.id}>
                 <strong>#{candidate.rank} {candidate.id}</strong>
-                <span>rank score {candidate.rankScore.toFixed(4)}</span>
+                <span>ipSAE {candidate.ipSAE.toFixed(2)} / ipTM {candidate.ipTM.toFixed(2)} / score {candidate.rankScore.toFixed(4)}</span>
               </p>
             ))
           ) : (
