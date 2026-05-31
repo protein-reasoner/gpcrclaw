@@ -1,0 +1,342 @@
+{
+  "campaign_id": "MRGPRX2_TARGET_PREP_EXAMPLE",
+  "design_spec": {
+    "allowed_contact_regions": [
+      "ECL2",
+      "TM4 flank",
+      "TM5 flank"
+    ],
+    "binder_format": "VHH",
+    "cdr3_length_range": [
+      10,
+      18
+    ],
+    "design_job_id": "MRGPRX2_ECL2_DESIGN_001",
+    "forbidden_contact_regions": [
+      "orthosteric pocket",
+      "intracellular face"
+    ],
+    "hotspot_residues": [
+      "K166",
+      "F170",
+      "D174",
+      "G178"
+    ],
+    "num_candidates_to_generate": 8,
+    "ranking_objective": "maximize ECL2-specific binding while minimizing cross-reactivity and developability risks",
+    "scaffold": "camelid_nanobody",
+    "target": "MRGPRX2",
+    "template": "7S8L"
+  },
+  "ecl2_mapping": {
+    "epitope": "ECL2",
+    "mapping_status": "sequence_verified_structure_placeholder",
+    "method": "configured ECL2 range checked against canonical UniProt sequence",
+    "residue_labels": [
+      "G165",
+      "K166",
+      "F167",
+      "C168",
+      "G169",
+      "F170",
+      "L171",
+      "F172",
+      "S173",
+      "D174",
+      "G175",
+      "D176",
+      "S177",
+      "G178",
+      "W179",
+      "C180",
+      "Q181",
+      "T182",
+      "F183",
+      "D184",
+      "F185"
+    ],
+    "sequence_residue_range": [
+      165,
+      185
+    ],
+    "structure_chain_id": "R",
+    "structure_residue_range": [
+      165,
+      185
+    ],
+    "target_id": "MRGPRX2",
+    "template": "7S8L",
+    "visualization_selection": "chain R and resi 165-185",
+    "warnings": [
+      "Structure residue numbering is assumed to match canonical sequence numbering until mmCIF parsing is implemented."
+    ]
+  },
+  "evidence_mode": "precomputed",
+  "hotspot_set": {
+    "epitope": "ECL2",
+    "hotspot_residues": [
+      "K166",
+      "F170",
+      "D174",
+      "G178"
+    ],
+    "method": "demo-derived hotspot positions normalized against canonical UniProt sequence",
+    "rationale": "Small ECL2 contact set for constrained extracellular nanobody design.",
+    "records": [
+      {
+        "amino_acid": "K",
+        "configured_residue": "K166",
+        "evidence": "demo-derived",
+        "exposure": 0.78,
+        "mapping_status": "sequence_verified",
+        "position": 166,
+        "region": "ECL2",
+        "residue": "K166",
+        "role": "charged exposed contact",
+        "warnings": []
+      },
+      {
+        "amino_acid": "F",
+        "configured_residue": "F170",
+        "evidence": "demo-derived",
+        "exposure": 0.65,
+        "mapping_status": "sequence_verified",
+        "position": 170,
+        "region": "ECL2",
+        "residue": "F170",
+        "role": "hydrophobic contact",
+        "warnings": []
+      },
+      {
+        "amino_acid": "D",
+        "configured_residue": "D174",
+        "evidence": "demo-derived",
+        "exposure": 0.71,
+        "mapping_status": "sequence_verified",
+        "position": 174,
+        "region": "ECL2",
+        "residue": "D174",
+        "role": "polar/charged contact",
+        "warnings": []
+      },
+      {
+        "amino_acid": "G",
+        "configured_residue": "Y178",
+        "evidence": "demo-derived",
+        "exposure": 0.68,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 178,
+        "region": "ECL2",
+        "residue": "G178",
+        "role": "aromatic contact",
+        "warnings": [
+          "Configured hotspot Y178 maps to G178 in UniProt Q96LB1."
+        ]
+      }
+    ],
+    "target_id": "MRGPRX2"
+  },
+  "sequence_input": {
+    "fasta_header": ">sp|Q96LB1|MRGPRX2_HUMAN Mas-related G protein-coupled receptor X2",
+    "length_aa": 330,
+    "sequence": "MDPTTPAWGTESTTVNGNDQALLLLCGKETLIPVFLILFIALVGLVGNGFVLWLLGFRMRRNAFSVYVLSLAGADFLFLCFQIINCLVYLSNFFCSISINFPSFFTTVMTCAYLAGLSMLSTVSTERCLSVLWPIWYRCRRPRHLSAVVCVLLWALSLLLSILEGKFCGFLFSDGDSGWCQTFDFITAAWLIFLFMVLCGSSLALLVRILCGSRGLPLTRLYLTILLTVLVFLLCGLPFGIQWFLILWIWKDSDVLFCHIHPVSVVLSSLNSSANPIIYFFVGSFRKQWRLQQPILKLALQRALQDIAEVDHSEGCFRQGTPEMSRSSLV",
+    "source": "UniProt canonical FASTA",
+    "target_id": "MRGPRX2",
+    "uniprot_id": "Q96LB1"
+  },
+  "stage": "target_preparation",
+  "structure_warnings": {
+    "blocking": false,
+    "target_id": "MRGPRX2",
+    "warnings": [
+      "ECL2 sequence positions are verified against canonical sequence, but template residue numbering is not parsed yet.",
+      "Clean target PDB files are placeholders until receptor-only mmCIF/PDB extraction is implemented.",
+      "Configured hotspot Y178 maps to G178 in UniProt Q96LB1."
+    ]
+  },
+  "target_metadata": {
+    "approx_ecl2_range": [
+      165,
+      185
+    ],
+    "counter_screen_targets": [
+      "MRGPRX1",
+      "MRGPRX3",
+      "MRGPRX4"
+    ],
+    "gene": "MRGPRX2",
+    "length_aa": 330,
+    "name": "Mas-related G protein-coupled receptor X2",
+    "protein_class": "Class A GPCR, Mas-related family",
+    "source_urls": [
+      "https://rest.uniprot.org/uniprotkb/Q96LB1.fasta",
+      "https://www.rcsb.org/structure/7S8L"
+    ],
+    "target_id": "MRGPRX2",
+    "target_region": "ECL2",
+    "uniprot_id": "Q96LB1"
+  },
+  "target_preparation": {
+    "assumptions": [
+      "Placeholder clean structures carry residue-numbering references, not atomically valid receptor coordinates.",
+      "Native ligands and signaling partners are retained as metadata rather than physical constraints."
+    ],
+    "clean_target": {
+      "chain_id": "R",
+      "contains": [
+        "receptor_chain_only",
+        "ECL2_residue_numbering_reference"
+      ],
+      "path": "examples/target_prep/structures/MRGPRX2_7S8L_clean_target.pdb",
+      "placeholder": true
+    },
+    "input_structure": {
+      "format": "pdb",
+      "pdb_id": "7S8L",
+      "receptor_chain_id": "R",
+      "source_url": "https://www.rcsb.org/structure/7S8L"
+    },
+    "retained_metadata": {
+      "native_ligand": null,
+      "template_state": "active"
+    },
+    "strip_policy": {
+      "native_ligands_as_metadata_only": true,
+      "strip_antibodies": true,
+      "strip_g_proteins": true,
+      "strip_ions": true,
+      "strip_non_target_chains": true,
+      "strip_waters": true
+    },
+    "target_id": "MRGPRX2",
+    "template_id": "7S8L"
+  },
+  "template_selection": {
+    "clean_structure_path": "/mnt/disks/input/targets/MRGPRX2_7S8L_clean_target.pdb",
+    "rationale": "MRGPRX2 + cortistatin-14 + Gq; receptor-only clean target is prepared for model inputs.",
+    "receptor_chain_id": "R",
+    "selected_template": "7S8L",
+    "state": "active",
+    "structure_file_url": "https://www.rcsb.org/structure/7S8L",
+    "structure_format": "pdb",
+    "target_id": "MRGPRX2"
+  },
+  "worker_target": {
+    "chain_id": "R",
+    "counter_screen_targets": [
+      "MRGPRX1",
+      "MRGPRX3",
+      "MRGPRX4"
+    ],
+    "ecl2_range": [
+      165,
+      185
+    ],
+    "ecl2_residue_labels": [
+      "G165",
+      "K166",
+      "F167",
+      "C168",
+      "G169",
+      "F170",
+      "L171",
+      "F172",
+      "S173",
+      "D174",
+      "G175",
+      "D176",
+      "S177",
+      "G178",
+      "W179",
+      "C180",
+      "Q181",
+      "T182",
+      "F183",
+      "D184",
+      "F185"
+    ],
+    "epitope": "ECL2",
+    "gene": "MRGPRX2",
+    "hotspot_records": [
+      {
+        "amino_acid": "K",
+        "configured_residue": "K166",
+        "evidence": "demo-derived",
+        "exposure": 0.78,
+        "mapping_status": "sequence_verified",
+        "position": 166,
+        "region": "ECL2",
+        "residue": "K166",
+        "role": "charged exposed contact",
+        "warnings": []
+      },
+      {
+        "amino_acid": "F",
+        "configured_residue": "F170",
+        "evidence": "demo-derived",
+        "exposure": 0.65,
+        "mapping_status": "sequence_verified",
+        "position": 170,
+        "region": "ECL2",
+        "residue": "F170",
+        "role": "hydrophobic contact",
+        "warnings": []
+      },
+      {
+        "amino_acid": "D",
+        "configured_residue": "D174",
+        "evidence": "demo-derived",
+        "exposure": 0.71,
+        "mapping_status": "sequence_verified",
+        "position": 174,
+        "region": "ECL2",
+        "residue": "D174",
+        "role": "polar/charged contact",
+        "warnings": []
+      },
+      {
+        "amino_acid": "G",
+        "configured_residue": "Y178",
+        "evidence": "demo-derived",
+        "exposure": 0.68,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 178,
+        "region": "ECL2",
+        "residue": "G178",
+        "role": "aromatic contact",
+        "warnings": [
+          "Configured hotspot Y178 maps to G178 in UniProt Q96LB1."
+        ]
+      }
+    ],
+    "hotspot_residues": [
+      "K166",
+      "F170",
+      "D174",
+      "G178"
+    ],
+    "receptor_sequence": "MDPTTPAWGTESTTVNGNDQALLLLCGKETLIPVFLILFIALVGLVGNGFVLWLLGFRMRRNAFSVYVLSLAGADFLFLCFQIINCLVYLSNFFCSISINFPSFFTTVMTCAYLAGLSMLSTVSTERCLSVLWPIWYRCRRPRHLSAVVCVLLWALSLLLSILEGKFCGFLFSDGDSGWCQTFDFITAAWLIFLFMVLCGSSLALLVRILCGSRGLPLTRLYLTILLTVLVFLLCGLPFGIQWFLILWIWKDSDVLFCHIHPVSVVLSSLNSSANPIIYFFVGSFRKQWRLQQPILKLALQRALQDIAEVDHSEGCFRQGTPEMSRSSLV",
+    "receptor_structure_path": "examples/target_prep/structures/MRGPRX2_7S8L_clean_target.pdb",
+    "sequence": "MDPTTPAWGTESTTVNGNDQALLLLCGKETLIPVFLILFIALVGLVGNGFVLWLLGFRMRRNAFSVYVLSLAGADFLFLCFQIINCLVYLSNFFCSISINFPSFFTTVMTCAYLAGLSMLSTVSTERCLSVLWPIWYRCRRPRHLSAVVCVLLWALSLLLSILEGKFCGFLFSDGDSGWCQTFDFITAAWLIFLFMVLCGSSLALLVRILCGSRGLPLTRLYLTILLTVLVFLLCGLPFGIQWFLILWIWKDSDVLFCHIHPVSVVLSSLNSSANPIIYFFVGSFRKQWRLQQPILKLALQRALQDIAEVDHSEGCFRQGTPEMSRSSLV",
+    "structure_path": "examples/target_prep/structures/MRGPRX2_7S8L_clean_target.pdb",
+    "target_id": "MRGPRX2",
+    "target_preparation": {
+      "clean_target_path": "examples/target_prep/structures/MRGPRX2_7S8L_clean_target.pdb",
+      "strip_policy": {
+        "native_ligands_as_metadata_only": true,
+        "strip_antibodies": true,
+        "strip_g_proteins": true,
+        "strip_ions": true,
+        "strip_non_target_chains": true,
+        "strip_waters": true
+      },
+      "warnings": [
+        "ECL2 sequence positions are verified against canonical sequence, but template residue numbering is not parsed yet.",
+        "Clean target PDB files are placeholders until receptor-only mmCIF/PDB extraction is implemented.",
+        "Configured hotspot Y178 maps to G178 in UniProt Q96LB1."
+      ]
+    },
+    "template_id": "7S8L",
+    "uniprot_id": "Q96LB1"
+  }
+}

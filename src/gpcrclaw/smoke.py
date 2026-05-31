@@ -10,8 +10,8 @@ from .backends.local_mock import LocalMockBackend
 from .backends.retry import submit_with_retries
 from .campaign import CampaignRepository, new_campaign, plan_fake_worker_batch, summarize_job_completion
 from .config import GpcrClawConfig
-from .ids import utc_now
-from .models import ArtifactRef, Candidate, JobAttempt, Metric, Provenance, TargetContext
+from .models import ArtifactRef, JobAttempt, TargetContext
+from .orchestration import attach_worker_output
 from .report import generate_report, rank_candidates
 from .worker_contract import parse_worker_outputs
 
@@ -83,7 +83,16 @@ def run_local_smoke(config: GpcrClawConfig, *, target_id: str = "LPAR1", count: 
         if final_status.status == "succeeded":
             submission = execution.submissions[-1]
             parsed = parse_worker_outputs(Path(submission.output_uri.removeprefix("local://")))
-            _attach_worker_output(campaign, batch.batch_id, job.job_id, job.attempts[-1].attempt_id, parsed.metrics, parsed.artifacts, store, manifest_log)
+            attach_worker_output(
+                campaign,
+                batch_id=batch.batch_id,
+                job_id=job.job_id,
+                attempt_id=job.attempts[-1].attempt_id,
+                metrics_payload=parsed.metrics,
+                artifacts_payload=parsed.artifacts,
+                artifact_uri_prefix=store.uri_for(campaign.campaign_id, "batches", batch.batch_id, "jobs", job.job_id, "attempts", job.attempts[-1].attempt_id, "output"),
+                manifest=manifest_log,
+            )
         else:
             failed_artifact = ArtifactRef(
                 artifact_id=f"failed_{job.job_id}",
@@ -111,56 +120,3 @@ def run_local_smoke(config: GpcrClawConfig, *, target_id: str = "LPAR1", count: 
         "job_statuses": {job.job_id: job.status for job in campaign.jobs},
         "report": json.loads(report_json),
     }
-
-
-def _attach_worker_output(
-    campaign,
-    batch_id: str,
-    job_id: str,
-    attempt_id: str,
-    metrics_payload: dict,
-    artifacts_payload: dict,
-    store: LocalArtifactStore,
-    manifest: ArtifactManifest,
-) -> None:
-    candidate_payload = metrics_payload["candidate"]
-    candidate = Candidate(
-        candidate_id=candidate_payload["candidate_id"],
-        target_id=candidate_payload["target_id"],
-        sequence=candidate_payload["sequence"],
-        cdr3=candidate_payload["cdr3"],
-        source=candidate_payload.get("source", "fake_worker"),
-        target_epitope=candidate_payload.get("target_epitope", "ECL2"),
-    )
-    artifact_uri = store.uri_for(campaign.campaign_id, "batches", batch_id, "jobs", job_id, "attempts", attempt_id, "output", "metrics.json")
-    for metric_payload in metrics_payload["metrics"]:
-        provenance = Provenance(
-            source_tool=metrics_payload["tool"],
-            worker_version=metrics_payload["worker_version"],
-            batch_id=batch_id,
-            job_id=job_id,
-            attempt_id=attempt_id,
-            artifact_uri=artifact_uri,
-            evidence_mode=campaign.mode,
-        )
-        metric = Metric(
-            candidate_id=metric_payload["candidate_id"],
-            name=metric_payload["name"],
-            value=metric_payload["value"],
-            provenance=provenance,
-        )
-        candidate.metrics.append(metric)
-        manifest.add_metric(metric)
-    campaign.candidates.append(candidate)
-    for artifact_payload in artifacts_payload["artifacts"]:
-        artifact = ArtifactRef(
-            artifact_id=f"{job_id}_{artifact_payload['kind']}",
-            kind=artifact_payload["kind"],
-            uri=store.uri_for(campaign.campaign_id, "batches", batch_id, "jobs", job_id, "attempts", attempt_id, "output", artifact_payload["path"]),
-            mime_type=artifact_payload["mime_type"],
-            source_job_id=job_id,
-            evidence_mode=campaign.mode,
-        )
-        campaign.artifacts.append(artifact)
-        manifest.add_artifact(artifact)
-    manifest.add_event("worker_output_attached", {"job_id": job_id, "attempt_id": attempt_id, "at": utc_now()})

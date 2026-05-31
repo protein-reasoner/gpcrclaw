@@ -30,6 +30,8 @@ JOB_STATUSES = {
 }
 
 EVIDENCE_MODES = {"mock", "precomputed", "live"}
+PIPELINE_STAGE_STATUSES = {"pending", "running", "done", "warning", "failed"}
+CANDIDATE_DECISIONS = {"keep", "retry", "drop"}
 
 
 @dataclass
@@ -95,6 +97,50 @@ class Metric:
     provenance: Provenance
     units: str | None = None
     status: str = "available"
+
+
+@dataclass
+class PipelineStage:
+    stage_id: str
+    label: str
+    status: str = "pending"
+    output: dict[str, Any] = field(default_factory=dict)
+    explanation: str = ""
+    warnings: list[str] = field(default_factory=list)
+
+
+@dataclass
+class EvidenceStatus:
+    candidate_id: str
+    stage_id: str
+    worker_name: str
+    status: str
+    present_metrics: list[str] = field(default_factory=list)
+    missing_metrics: list[str] = field(default_factory=list)
+    present_artifacts: list[str] = field(default_factory=list)
+    missing_artifacts: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    source_job_ids: list[str] = field(default_factory=list)
+
+
+@dataclass
+class CandidateDecision:
+    candidate_id: str
+    decision: str
+    reasons: list[str] = field(default_factory=list)
+    retry_reasons: list[str] = field(default_factory=list)
+    missing_evidence: list[str] = field(default_factory=list)
+    ensemble_disagreement_flags: list[str] = field(default_factory=list)
+
+
+@dataclass
+class RetryRecommendation:
+    candidate_id: str | None
+    worker_name: str
+    reason: str
+    retryable: bool = True
+    job_id: str | None = None
+    next_action: str = "retry_job"
 
 
 @dataclass
@@ -168,6 +214,10 @@ class Campaign:
     jobs: list[Job] = field(default_factory=list)
     candidates: list[Candidate] = field(default_factory=list)
     artifacts: list[ArtifactRef] = field(default_factory=list)
+    stages: list[PipelineStage] = field(default_factory=list)
+    evidence_status: list[EvidenceStatus] = field(default_factory=list)
+    candidate_decisions: list[CandidateDecision] = field(default_factory=list)
+    retry_recommendations: list[RetryRecommendation] = field(default_factory=list)
     report: ReportState = field(default_factory=ReportState)
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
@@ -186,6 +236,10 @@ class Campaign:
         jobs = [_job_from_dict(item) for item in data.get("jobs", [])]
         candidates = [_candidate_from_dict(item) for item in data.get("candidates", [])]
         artifacts = [ArtifactRef(**item) for item in data.get("artifacts", [])]
+        stages = [PipelineStage(**item) for item in data.get("stages", [])]
+        evidence_status = [EvidenceStatus(**item) for item in data.get("evidence_status", [])]
+        candidate_decisions = [CandidateDecision(**item) for item in data.get("candidate_decisions", [])]
+        retry_recommendations = [RetryRecommendation(**item) for item in data.get("retry_recommendations", [])]
         report = ReportState(**data.get("report", {}))
         return cls(
             campaign_id=data["campaign_id"],
@@ -198,6 +252,10 @@ class Campaign:
             jobs=jobs,
             candidates=candidates,
             artifacts=artifacts,
+            stages=stages,
+            evidence_status=evidence_status,
+            candidate_decisions=candidate_decisions,
+            retry_recommendations=retry_recommendations,
             report=report,
             created_at=data.get("created_at", utc_now()),
             updated_at=data.get("updated_at", utc_now()),

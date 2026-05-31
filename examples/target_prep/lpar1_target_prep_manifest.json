@@ -1,0 +1,405 @@
+{
+  "campaign_id": "LPAR1_TARGET_PREP_EXAMPLE",
+  "design_spec": {
+    "allowed_contact_regions": [
+      "ECL2",
+      "TM4 flank",
+      "TM5 flank"
+    ],
+    "binder_format": "VHH",
+    "cdr3_length_range": [
+      10,
+      18
+    ],
+    "design_job_id": "LPAR1_ECL2_DESIGN_001",
+    "forbidden_contact_regions": [
+      "orthosteric pocket",
+      "intracellular face"
+    ],
+    "hotspot_residues": [
+      "C190",
+      "N194",
+      "M198",
+      "L201",
+      "S205"
+    ],
+    "num_candidates_to_generate": 20,
+    "ranking_objective": "maximize ECL2-specific binding while minimizing cross-reactivity and developability risks",
+    "scaffold": "camelid_nanobody",
+    "target": "LPAR1",
+    "template": "7TD0"
+  },
+  "ecl2_mapping": {
+    "epitope": "ECL2",
+    "mapping_status": "sequence_verified_structure_placeholder",
+    "method": "configured ECL2 range checked against canonical UniProt sequence",
+    "residue_labels": [
+      "C188",
+      "I189",
+      "C190",
+      "D191",
+      "I192",
+      "E193",
+      "N194",
+      "C195",
+      "S196",
+      "N197",
+      "M198",
+      "A199",
+      "P200",
+      "L201",
+      "Y202",
+      "S203",
+      "D204",
+      "S205",
+      "Y206",
+      "L207",
+      "V208",
+      "F209",
+      "W210",
+      "A211"
+    ],
+    "sequence_residue_range": [
+      188,
+      211
+    ],
+    "structure_chain_id": "R",
+    "structure_residue_range": [
+      188,
+      211
+    ],
+    "target_id": "LPAR1",
+    "template": "7TD0",
+    "visualization_selection": "chain R and resi 188-211",
+    "warnings": [
+      "Structure residue numbering is assumed to match canonical sequence numbering until mmCIF parsing is implemented."
+    ]
+  },
+  "evidence_mode": "precomputed",
+  "hotspot_set": {
+    "epitope": "ECL2",
+    "hotspot_residues": [
+      "C190",
+      "N194",
+      "M198",
+      "L201",
+      "S205"
+    ],
+    "method": "demo-derived hotspot positions normalized against canonical UniProt sequence",
+    "rationale": "Small ECL2 contact set for constrained extracellular nanobody design.",
+    "records": [
+      {
+        "amino_acid": "C",
+        "configured_residue": "R190",
+        "evidence": "demo-derived",
+        "exposure": 0.82,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 190,
+        "region": "ECL2",
+        "residue": "C190",
+        "role": "surface exposed ECL2 contact",
+        "warnings": [
+          "Configured hotspot R190 maps to C190 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "N",
+        "configured_residue": "Y194",
+        "evidence": "demo-derived",
+        "exposure": 0.77,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 194,
+        "region": "ECL2",
+        "residue": "N194",
+        "role": "hydrophobic/aromatic surface",
+        "warnings": [
+          "Configured hotspot Y194 maps to N194 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "M",
+        "configured_residue": "D198",
+        "evidence": "demo-derived",
+        "exposure": 0.69,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 198,
+        "region": "ECL2",
+        "residue": "M198",
+        "role": "polar/charged contact",
+        "warnings": [
+          "Configured hotspot D198 maps to M198 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "L",
+        "configured_residue": "K201",
+        "evidence": "demo-derived",
+        "exposure": 0.74,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 201,
+        "region": "ECL2",
+        "residue": "L201",
+        "role": "charged surface contact",
+        "warnings": [
+          "Configured hotspot K201 maps to L201 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "S",
+        "configured_residue": "F205",
+        "evidence": "demo-derived",
+        "exposure": 0.63,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 205,
+        "region": "ECL2",
+        "residue": "S205",
+        "role": "surface aromatic contact",
+        "warnings": [
+          "Configured hotspot F205 maps to S205 in UniProt Q92633."
+        ]
+      }
+    ],
+    "target_id": "LPAR1"
+  },
+  "sequence_input": {
+    "fasta_header": ">sp|Q92633|LPAR1_HUMAN Lysophosphatidic acid receptor 1",
+    "length_aa": 364,
+    "sequence": "MAAISTSIPVISQPQFTAMNEPQCFYNESIAFFYNRSGKHLATEWNTVSKLVMGLGITVCIFIMLANLLVMVAIYVNRRFHFPIYYLMANLAAADFFAGLAYFYLMFNTGPNTRRLTVSTWLLRQGLIDTSLTASVANLLAIAIERHITVFRMQLHTRMSNRRVVVVIVVIWTMAIVMGAIPSVGWNCICDIENCSNMAPLYSDSYLVFWAIFNLVTFVVMVVLYAHIFGYVRQRTMRMSRHSSGPRRNRDTMMSLLKTVVIVLGAFIICWTPGLVLLLLDVCCPQCDVLAYEKFFLLLAEFNSAMNPIIYSYRDKEMSATFRQILCCQRSENPTGPTEGSDRSASSLNHTILAGVHSNDHSVV",
+    "source": "UniProt canonical FASTA",
+    "target_id": "LPAR1",
+    "uniprot_id": "Q92633"
+  },
+  "stage": "target_preparation",
+  "structure_warnings": {
+    "blocking": false,
+    "target_id": "LPAR1",
+    "warnings": [
+      "ECL2 sequence positions are verified against canonical sequence, but template residue numbering is not parsed yet.",
+      "Clean target PDB files are placeholders until receptor-only mmCIF/PDB extraction is implemented.",
+      "Configured hotspot R190 maps to C190 in UniProt Q92633.",
+      "Configured hotspot Y194 maps to N194 in UniProt Q92633.",
+      "Configured hotspot D198 maps to M198 in UniProt Q92633.",
+      "Configured hotspot K201 maps to L201 in UniProt Q92633.",
+      "Configured hotspot F205 maps to S205 in UniProt Q92633."
+    ]
+  },
+  "target_metadata": {
+    "alias": "EDG2",
+    "approx_ecl2_range": [
+      188,
+      211
+    ],
+    "counter_screen_targets": [
+      "LPAR2",
+      "LPAR3",
+      "LPAR4",
+      "LPAR5",
+      "LPAR6"
+    ],
+    "gene": "LPAR1",
+    "length_aa": 364,
+    "name": "Lysophosphatidic acid receptor 1",
+    "native_ligand": "lysophosphatidic acid (LPA)",
+    "protein_class": "Class A GPCR, lysophospholipid receptor family",
+    "source_urls": [
+      "https://rest.uniprot.org/uniprotkb/Q92633.fasta",
+      "https://www.rcsb.org/structure/7TD0"
+    ],
+    "target_id": "LPAR1",
+    "target_region": "ECL2",
+    "uniprot_id": "Q92633"
+  },
+  "target_preparation": {
+    "assumptions": [
+      "Placeholder clean structures carry residue-numbering references, not atomically valid receptor coordinates.",
+      "Native ligands and signaling partners are retained as metadata rather than physical constraints."
+    ],
+    "clean_target": {
+      "chain_id": "R",
+      "contains": [
+        "receptor_chain_only",
+        "ECL2_residue_numbering_reference"
+      ],
+      "path": "examples/target_prep/structures/LPAR1_7TD0_clean_target.pdb",
+      "placeholder": true
+    },
+    "input_structure": {
+      "format": "pdb",
+      "pdb_id": "7TD0",
+      "receptor_chain_id": "R",
+      "source_url": "https://www.rcsb.org/structure/7TD0"
+    },
+    "retained_metadata": {
+      "native_ligand": "lysophosphatidic acid (LPA)",
+      "template_state": "active"
+    },
+    "strip_policy": {
+      "native_ligands_as_metadata_only": true,
+      "strip_antibodies": true,
+      "strip_g_proteins": true,
+      "strip_ions": true,
+      "strip_non_target_chains": true,
+      "strip_waters": true
+    },
+    "target_id": "LPAR1",
+    "template_id": "7TD0"
+  },
+  "template_selection": {
+    "clean_structure_path": "/mnt/disks/input/targets/LPAR1_7TD0_clean_target.pdb",
+    "rationale": "LPAR1 + LPA + Gi heterotrimer; receptor-only clean target is prepared for model inputs.",
+    "receptor_chain_id": "R",
+    "selected_template": "7TD0",
+    "state": "active",
+    "structure_file_url": "https://www.rcsb.org/structure/7TD0",
+    "structure_format": "pdb",
+    "target_id": "LPAR1"
+  },
+  "worker_target": {
+    "chain_id": "R",
+    "counter_screen_targets": [
+      "LPAR2",
+      "LPAR3",
+      "LPAR4",
+      "LPAR5",
+      "LPAR6"
+    ],
+    "ecl2_range": [
+      188,
+      211
+    ],
+    "ecl2_residue_labels": [
+      "C188",
+      "I189",
+      "C190",
+      "D191",
+      "I192",
+      "E193",
+      "N194",
+      "C195",
+      "S196",
+      "N197",
+      "M198",
+      "A199",
+      "P200",
+      "L201",
+      "Y202",
+      "S203",
+      "D204",
+      "S205",
+      "Y206",
+      "L207",
+      "V208",
+      "F209",
+      "W210",
+      "A211"
+    ],
+    "epitope": "ECL2",
+    "gene": "LPAR1",
+    "hotspot_records": [
+      {
+        "amino_acid": "C",
+        "configured_residue": "R190",
+        "evidence": "demo-derived",
+        "exposure": 0.82,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 190,
+        "region": "ECL2",
+        "residue": "C190",
+        "role": "surface exposed ECL2 contact",
+        "warnings": [
+          "Configured hotspot R190 maps to C190 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "N",
+        "configured_residue": "Y194",
+        "evidence": "demo-derived",
+        "exposure": 0.77,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 194,
+        "region": "ECL2",
+        "residue": "N194",
+        "role": "hydrophobic/aromatic surface",
+        "warnings": [
+          "Configured hotspot Y194 maps to N194 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "M",
+        "configured_residue": "D198",
+        "evidence": "demo-derived",
+        "exposure": 0.69,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 198,
+        "region": "ECL2",
+        "residue": "M198",
+        "role": "polar/charged contact",
+        "warnings": [
+          "Configured hotspot D198 maps to M198 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "L",
+        "configured_residue": "K201",
+        "evidence": "demo-derived",
+        "exposure": 0.74,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 201,
+        "region": "ECL2",
+        "residue": "L201",
+        "role": "charged surface contact",
+        "warnings": [
+          "Configured hotspot K201 maps to L201 in UniProt Q92633."
+        ]
+      },
+      {
+        "amino_acid": "S",
+        "configured_residue": "F205",
+        "evidence": "demo-derived",
+        "exposure": 0.63,
+        "mapping_status": "normalized_from_configured_label",
+        "position": 205,
+        "region": "ECL2",
+        "residue": "S205",
+        "role": "surface aromatic contact",
+        "warnings": [
+          "Configured hotspot F205 maps to S205 in UniProt Q92633."
+        ]
+      }
+    ],
+    "hotspot_residues": [
+      "C190",
+      "N194",
+      "M198",
+      "L201",
+      "S205"
+    ],
+    "receptor_sequence": "MAAISTSIPVISQPQFTAMNEPQCFYNESIAFFYNRSGKHLATEWNTVSKLVMGLGITVCIFIMLANLLVMVAIYVNRRFHFPIYYLMANLAAADFFAGLAYFYLMFNTGPNTRRLTVSTWLLRQGLIDTSLTASVANLLAIAIERHITVFRMQLHTRMSNRRVVVVIVVIWTMAIVMGAIPSVGWNCICDIENCSNMAPLYSDSYLVFWAIFNLVTFVVMVVLYAHIFGYVRQRTMRMSRHSSGPRRNRDTMMSLLKTVVIVLGAFIICWTPGLVLLLLDVCCPQCDVLAYEKFFLLLAEFNSAMNPIIYSYRDKEMSATFRQILCCQRSENPTGPTEGSDRSASSLNHTILAGVHSNDHSVV",
+    "receptor_structure_path": "examples/target_prep/structures/LPAR1_7TD0_clean_target.pdb",
+    "sequence": "MAAISTSIPVISQPQFTAMNEPQCFYNESIAFFYNRSGKHLATEWNTVSKLVMGLGITVCIFIMLANLLVMVAIYVNRRFHFPIYYLMANLAAADFFAGLAYFYLMFNTGPNTRRLTVSTWLLRQGLIDTSLTASVANLLAIAIERHITVFRMQLHTRMSNRRVVVVIVVIWTMAIVMGAIPSVGWNCICDIENCSNMAPLYSDSYLVFWAIFNLVTFVVMVVLYAHIFGYVRQRTMRMSRHSSGPRRNRDTMMSLLKTVVIVLGAFIICWTPGLVLLLLDVCCPQCDVLAYEKFFLLLAEFNSAMNPIIYSYRDKEMSATFRQILCCQRSENPTGPTEGSDRSASSLNHTILAGVHSNDHSVV",
+    "structure_path": "examples/target_prep/structures/LPAR1_7TD0_clean_target.pdb",
+    "target_id": "LPAR1",
+    "target_preparation": {
+      "clean_target_path": "examples/target_prep/structures/LPAR1_7TD0_clean_target.pdb",
+      "strip_policy": {
+        "native_ligands_as_metadata_only": true,
+        "strip_antibodies": true,
+        "strip_g_proteins": true,
+        "strip_ions": true,
+        "strip_non_target_chains": true,
+        "strip_waters": true
+      },
+      "warnings": [
+        "ECL2 sequence positions are verified against canonical sequence, but template residue numbering is not parsed yet.",
+        "Clean target PDB files are placeholders until receptor-only mmCIF/PDB extraction is implemented.",
+        "Configured hotspot R190 maps to C190 in UniProt Q92633.",
+        "Configured hotspot Y194 maps to N194 in UniProt Q92633.",
+        "Configured hotspot D198 maps to M198 in UniProt Q92633.",
+        "Configured hotspot K201 maps to L201 in UniProt Q92633.",
+        "Configured hotspot F205 maps to S205 in UniProt Q92633."
+      ]
+    },
+    "template_id": "7TD0",
+    "uniprot_id": "Q92633"
+  }
+}

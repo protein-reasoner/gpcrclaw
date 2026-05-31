@@ -4,7 +4,9 @@ import json
 from dataclasses import asdict
 
 from .artifacts import ArtifactManifest, LocalArtifactStore
+from .ids import utc_now
 from .models import Campaign, ReportState
+from .orchestration import orchestrate_campaign
 
 DEFAULT_RANKING_METRICS = ["interface_score", "specificity_margin", "developability_score"]
 
@@ -45,6 +47,10 @@ def report_readiness(campaign: Campaign) -> ReportState:
 def generate_report(campaign: Campaign, store: LocalArtifactStore) -> str:
     rank_candidates(campaign)
     readiness = report_readiness(campaign)
+    readiness.generated_at = utc_now()
+    readiness.report_uri = store.uri_for(campaign.campaign_id, "reports", "campaign_report.json")
+    campaign.report = readiness
+    orchestration_summary = orchestrate_campaign(campaign)
     manifest = ArtifactManifest(store, campaign.campaign_id)
     failed_jobs = [
         {"job_id": job.job_id, "status": job.status, "attempts": [asdict(attempt) for attempt in job.attempts]}
@@ -63,6 +69,7 @@ def generate_report(campaign: Campaign, store: LocalArtifactStore) -> str:
             "No clinical or therapeutic conclusion is implied.",
         ],
         "failed_or_skipped_jobs": failed_jobs,
+        "orchestration": orchestration_summary,
         "ranked_candidates": [
             {
                 "rank": candidate.rank,
@@ -77,7 +84,6 @@ def generate_report(campaign: Campaign, store: LocalArtifactStore) -> str:
     }
     artifact = store.write_json(campaign.campaign_id, ("reports", "campaign_report.json"), payload)
     manifest.add_artifact(artifact)
-    campaign.report = readiness
     campaign.report.report_uri = artifact.uri
-    campaign.report.generated_at = readiness.generated_at
+    orchestrate_campaign(campaign)
     return json.dumps(payload, indent=2, sort_keys=True)
