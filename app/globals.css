@@ -220,6 +220,10 @@ p {
   text-transform: uppercase;
 }
 
+.status-pill.live {
+  background: rgba(47, 125, 98, 0.1);
+}
+
 .receptor-visual {
   background:
     linear-gradient(180deg, rgba(47, 125, 98, 0.08), transparent 62%),
@@ -387,6 +391,159 @@ p {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.cloud-panel {
+  background: var(--surface-strong);
+  border-radius: var(--radius);
+  color: #f6f7f4;
+  padding: 24px;
+}
+
+.cloud-panel-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.cloud-panel-heading h2 {
+  margin-bottom: 0;
+}
+
+.cloud-panel .label,
+.cloud-panel small,
+.cloud-lists span {
+  color: rgba(246, 247, 244, 0.68);
+}
+
+.icon-button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  color: #f6f7f4;
+  cursor: pointer;
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.icon-button:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+.cloud-status-grid,
+.launch-grid,
+.cloud-lists {
+  display: grid;
+  gap: 12px;
+}
+
+.cloud-status-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.status-tile,
+.launch-card,
+.cloud-lists > div {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: var(--radius);
+}
+
+.status-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 128px;
+  padding: 16px;
+}
+
+.status-tile span {
+  color: rgba(246, 247, 244, 0.72);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.status-tile strong {
+  font-size: 1.06rem;
+  overflow-wrap: anywhere;
+}
+
+.launch-grid {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 12px;
+}
+
+.launch-card {
+  color: #f6f7f4;
+  cursor: pointer;
+  padding: 16px;
+  text-align: left;
+}
+
+.launch-card:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
+.launch-card:hover:not(:disabled),
+.icon-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.launch-card span {
+  align-items: center;
+  display: flex;
+  font-weight: 850;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.launch-card small {
+  display: block;
+  line-height: 1.45;
+}
+
+.cloud-lists {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 12px;
+}
+
+.cloud-lists > div {
+  padding: 16px;
+}
+
+.cloud-lists h3 {
+  font-size: 0.94rem;
+  margin-bottom: 12px;
+}
+
+.cloud-lists p {
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  font-size: 0.86rem;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 0;
+  min-height: 34px;
+  overflow-wrap: anywhere;
+  padding: 8px 0;
+}
+
+.cloud-lists p:first-of-type {
+  border-top: 0;
+}
+
+.cloud-message {
+  color: rgba(246, 247, 244, 0.78);
+  margin: 14px 0 0;
+}
+
 .proof-card {
   box-shadow: none;
   min-height: 210px;
@@ -511,6 +668,12 @@ p {
   }
 
   .proof-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cloud-status-grid,
+  .launch-grid,
+  .cloud-lists {
     grid-template-columns: 1fr;
   }
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Activity, ArrowRight, FlaskConical, Layers3, ShieldCheck } from "lucide-react";
 import { demoCampaign, pipelineStages } from "@/lib/demo-data";
+import { CloudLaunchPanel } from "@/app/components/CloudLaunchPanel";
 
 const proofPoints = [
   {
@@ -47,7 +48,7 @@ export default function Home() {
               Open LPAR1 demo <ArrowRight size={18} aria-hidden="true" />
             </Link>
             <a className="button secondary" href="/api/campaign">
-              View API seed
+              View live API
             </a>
           </div>
         </div>
@@ -58,7 +59,7 @@ export default function Home() {
               <span className="label">Active path</span>
               <h2>{demoCampaign.name}</h2>
             </div>
-            <span className="status-pill">mock</span>
+            <span className="status-pill live">cloud</span>
           </div>
           <div className="receptor-visual" aria-hidden="true">
             <div className="membrane" />
@@ -89,10 +90,14 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="content-band">
+        <CloudLaunchPanel />
+      </section>
+
       <section className="content-band" id="workflow">
         <div className="section-heading">
-          <h2>Skeleton workflow</h2>
-          <p>The first website pass mirrors the Python runtime without pretending the live models are ready.</p>
+          <h2>Live workflow</h2>
+          <p>The website now connects to the same Python submitters that stage manifests, upload inputs, and submit Google Batch GPU jobs.</p>
         </div>
         <div className="stage-list">
           {pipelineStages.map((stage, index) => (

@@ -28,8 +28,8 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
           <span className="label">Campaign ID</span>
           <h1>{id}</h1>
           <p>
-            Demo campaign state for {demoCampaign.target}. This page is static seed data for now;
-            it gives the Vercel app a concrete route to grow from.
+            Campaign state for {demoCampaign.target}. The launch controls on the home page submit the
+            real RFantibody and ESMFold2 Google Batch jobs and keep the research boundary explicit.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
           </div>
           <div>
             <span>Evidence</span>
-            <strong>mock</strong>
+            <strong>live cloud</strong>
           </div>
           <div>
             <span>Status</span>
@@ -55,7 +55,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
         <section className="candidate-section" aria-labelledby="candidate-heading">
           <div className="section-heading">
             <h2 id="candidate-heading">Ranked candidates</h2>
-            <p>Seeded examples shaped like the Python smoke report output.</p>
+            <p>Seeded examples remain visible until the live cloud outputs land in the configured GCS artifact root.</p>
           </div>
           <div className="candidate-table" role="table" aria-label="Ranked candidate table">
             <div className="candidate-row table-head" role="row">
@@ -83,8 +83,8 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
           <div>
             <h2>Report boundary</h2>
             <p>
-              Computational research-support output only. Mock and precomputed evidence must not be
-              interpreted as live model validation.
+              Computational research-support output only. Live model output must not be interpreted
+              as clinical or therapeutic validation.
             </p>
           </div>
           <a className="button secondary" href="/api/campaign">

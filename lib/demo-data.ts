@@ -21,8 +21,8 @@ export const pipelineStages = [
   },
   {
     name: "Worker batch",
-    description: "Submit candidate work units through the manifest, metrics, artifact, and logs contract.",
-    state: "mock"
+    description: "Submit RFantibody and ESMFold2 work units through the manifest, GCS artifact, and Google Batch contract.",
+    state: "cloud"
   },
   {
     name: "Ranking report",
