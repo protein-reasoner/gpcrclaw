@@ -1,6 +1,31 @@
 # Real Model Execution Plan
 
-The fake-worker path is now a proven execution harness, not the final model strategy. The next step is to replace worker internals while keeping orchestration, Batch submission, artifact storage, and provenance unchanged.
+The fake-worker path is now a proven execution harness, not the final model strategy. The real design path is RFantibody plus ESMFold2 on Google Batch A100 workers, with Boltz-2, Chai-1, ImmuneBuilder, and ThermoMPNN kept as downstream verifier/QC workers.
+
+## Final Design Target
+
+Primary cloud model workers:
+
+```text
+rfantibody-worker:
+  upstream: RosettaCommons RFantibody/RFdiffusion
+  role: structure-conditioned antibody or nanobody candidate generation
+  image: us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/rfantibody-worker:latest
+
+esmfold2-worker:
+  upstream: Biohub ESMFold2
+  role: fold generated candidates or target:candidate inputs and emit confidence metrics
+  image: us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/esmfold2-worker:latest
+```
+
+Cloud submission entrypoints:
+
+```bash
+python3 scripts/run_rfantibody_batch.py --manifest examples/rfantibody/lpar1_generation_manifest.json --live
+python3 scripts/run_esmfold2_batch.py --manifest examples/esmfold2/lpar1_nanobody_fold_manifest.json --live
+```
+
+Do not launch these blindly from docs. Build the images, set model/input paths, then submit through the scripts so assets are staged to Cloud Storage and job failures return nonzero.
 
 ## Current Proven Path
 
@@ -32,56 +57,89 @@ metrics.json
 structures/LPAR1_NB_CLOUD_SMOKE_complex.pdb
 ```
 
-## First Real Worker: Boltz-2
+## Primary Worker: RFantibody/RFdiffusion
 
-Boltz-2 should be the first real model worker because it can score a small candidate set before we attempt full generation.
+RFantibody is the generation worker. It emits normalized candidate tables, FASTA files, optional structures, and downstream scoring manifests.
 
 First live scope:
 
-- Input: prepared receptor structure and one candidate nanobody sequence or structure.
-- Output: complex prediction/scoring artifacts.
-- Metrics: `iptm`, `ptm`, `complex_plddt`, plus warnings and raw model output paths.
+- Input: prepared receptor structure, epitope/hotspot constraints, framework/scaffold settings, and generation count.
+- Output: generated candidates, FASTA files, optional extracted structures, and downstream verifier manifests.
+- Metrics: `generation_rank`, `cdr3_length`, `sequence_length`, plus optional RFantibody score fields when present.
 - GPU: standard A100 in `us-central1`.
-- Batch shape: one candidate per job until parsing and provenance are proven.
+- Batch shape: one generation wave per job, with `--gpu-count 1|2|4|8` available for valid A2 machine shapes.
 
-The orchestration contract should not change. Only the container image and worker output schema should become real.
+The worker image is defined by `Dockerfile.rfantibody` and installs the RosettaCommons RFantibody repository. The Batch worker module is `gpcrclaw.workers.rfantibody`.
 
-The worker image is defined by `Dockerfile.boltz2` and installs `boltz[cuda]==2.2.1`. The Batch worker module is `gpcrclaw.workers.boltz2_live`.
-
-Important privacy decision: `--use_msa_server` sends protein sequences to the configured MSA server. Use precomputed MSAs or `msa: empty` for private sequences until a private MSA service is available.
-
-Submit the first Boltz-2 Batch worker dry run:
+Build the image:
 
 ```bash
-python3 scripts/run_boltz2_batch.py --manifest examples/boltz2/lpar1_nanobody_manifest.json
+gcloud builds submit --config cloudbuild.rfantibody.yaml .
 ```
 
-Submit a live Boltz-2 run only after accepting the MSA/privacy behavior:
+Submit a dry-run Batch job:
 
 ```bash
-python3 scripts/run_boltz2_batch.py \
-  --manifest examples/boltz2/lpar1_nanobody_manifest.json \
-  --live \
-  --use-msa-server
+python3 scripts/run_rfantibody_batch.py --manifest examples/rfantibody/lpar1_generation_manifest.json
 ```
 
-Without `--use-msa-server`, the generated YAML uses `msa: empty` for both chains. That is useful for plumbing checks but not the recommended scientific mode.
+Submit live generation after `target.structure_path`, framework/scaffold inputs, and RFantibody commands/default paths are configured:
+
+```bash
+python3 scripts/run_rfantibody_batch.py \
+  --manifest examples/rfantibody/lpar1_generation_manifest.json \
+  --live
+```
+
+## Primary Worker: ESMFold2
+
+ESMFold2 is the structure/confidence worker for generated candidates.
+
+First live scope:
+
+- Input: generated nanobody candidate sequence, optionally with target sequence for target:candidate folding.
+- Output: ESMFold2 mmCIF structure, raw metrics JSON, logs, and contract metrics.
+- Metrics: `mean_plddt`, `ptm`, `iptm`, `sequence_length`.
+- GPU: standard A100 in `us-central1`.
+- Batch shape: one candidate per job until runtime and output shape are known.
+
+The worker image is defined by `Dockerfile.esmfold2` and installs Biohub's ESM package from GitHub. The Batch worker module is `gpcrclaw.workers.esmfold2`.
+
+Build the image:
+
+```bash
+gcloud builds submit --config cloudbuild.esmfold2.yaml .
+```
+
+Submit a dry-run Batch job:
+
+```bash
+python3 scripts/run_esmfold2_batch.py --manifest examples/esmfold2/lpar1_nanobody_fold_manifest.json
+```
+
+Submit live folding:
+
+```bash
+python3 scripts/run_esmfold2_batch.py \
+  --manifest examples/esmfold2/lpar1_nanobody_fold_manifest.json \
+  --live
+```
 
 ## Required Gates
 
-Before enabling live Boltz-2:
+Before enabling live design waves:
 
-1. Confirm license and model-weight access.
-2. Store weights in a controlled Cloud Storage model artifact prefix.
-3. Build `boltz2-worker` as a separate Artifact Registry image.
-4. Add an integration test that validates a tiny precomputed/sample input without needing a full campaign.
-5. Run one A100 live scoring job.
-6. Parse real metrics into candidate provenance.
-7. Compare report output with fake-worker and precomputed modes to make sure labels remain honest.
+1. Confirm RFantibody and ESMFold2 license/citation requirements.
+2. Build and publish `rfantibody-worker` and `esmfold2-worker`.
+3. Set GitHub OIDC publisher variables and Artifact Registry writer access.
+4. Stage target structures/frameworks through the Batch submit scripts.
+5. Keep generated outputs under `gs://gpcrclaw-artifacts/campaigns/alankrit/...`.
+6. Parse real metrics into candidate provenance through `metrics.json` and `artifacts.json`.
+7. Compare RFantibody generation outputs with ESMFold2 confidence before sending candidates to Boltz/Chai verifier waves.
 
-## Second Real Worker: ThermoMPNN
+## Secondary Worker: ThermoMPNN
 
-ThermoMPNN should follow Boltz-2 as the first stability-risk worker. It does not score binding or complex confidence. It scores structure-aware single point mutations from a candidate PDB and returns predicted stability-change summaries.
+ThermoMPNN is a downstream stability-risk worker. It does not score binding or complex confidence. It scores structure-aware single point mutations from a candidate PDB and returns predicted stability-change summaries.
 
 First live scope:
 
@@ -104,9 +162,9 @@ PYTHONPATH=src python3 -m gpcrclaw.workers.thermompnn \
 
 Live ThermoMPNN remains gated on a dedicated image with the upstream repo, checkpoint, and candidate PDB staged in paths visible to the worker.
 
-## Third Real Worker: ImmuneBuilder / NanoBodyBuilder2
+## Secondary Worker: ImmuneBuilder / NanoBodyBuilder2
 
-ImmuneBuilder follows Boltz-2 and ThermoMPNN as the first standalone nanobody structure-QC worker. It does not score receptor binding or model the antigen complex. It predicts the candidate VHH structure and turns NanoBodyBuilder2 ensemble variation into residue-level and CDR-loop QC artifacts.
+ImmuneBuilder is the standalone nanobody structure-QC worker. It does not score receptor binding or model the antigen complex. It predicts the candidate VHH structure and turns NanoBodyBuilder2 ensemble variation into residue-level and CDR-loop QC artifacts.
 
 First live scope:
 
@@ -140,17 +198,6 @@ python3 scripts/run_immunebuilder_batch.py \
   --manifest examples/immunebuilder/lpar1_nanobody_qc_manifest.json \
   --live
 ```
-
-## Later Workers
-
-After ImmuneBuilder:
-
-```text
-RFAntibody/RFdiffusion + ProteinMPNN -> generation wave
-Chai-1 -> secondary independent complex verifier
-```
-
-Generation should come after scoring because it is the heavier operational step and requires stricter batching, checkpointing, and sampling controls.
 
 ## Chai-1 Secondary Verifier
 
@@ -202,14 +249,14 @@ python3 scripts/run_chai1_batch.py \
 
 Without those server flags, the worker uses Chai-1's no-MSA/no-template path. That is better for private plumbing checks but should be labeled as a lower-confidence verifier run.
 
-## RFAntibody/RFdiffusion Generation Interface
+## RFantibody/RFdiffusion Output Contract
 
-The generation worker is staged as an interface first, not a claim that RFAntibody is installed in the runtime image. It preserves the manifest/output contract and emits normalized candidate artifacts that a later Boltz-2 scoring wave can consume.
+The RFantibody worker now has a real cloud image and preserves the manifest/output contract while normalizing generated candidate artifacts for later scoring waves.
 
 Entrypoint:
 
 ```bash
-python -m gpcrclaw.workers.rfantibody --manifest input/manifest.json
+python3 -m gpcrclaw.workers.rfantibody --manifest input/manifest.json
 ```
 
 Normalized outputs:
@@ -230,7 +277,7 @@ Each generated candidate records `candidate_id`, target, sequence, CDR fields, C
 For plumbing checks, use the dry-run path:
 
 ```bash
-python -m gpcrclaw.workers.rfantibody \
+python3 -m gpcrclaw.workers.rfantibody \
   --manifest examples/rfantibody/lpar1_generation_manifest.json \
   --dry-run
 ```

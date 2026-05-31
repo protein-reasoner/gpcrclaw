@@ -32,6 +32,7 @@ class GpcrClawConfig:
     artifact_prefix: str = "campaigns/alankrit"
     container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/fake-worker:latest"
     boltz2_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:latest"
+    thermompnn_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/thermompnn-worker:latest"
     chai1_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/chai1-worker:latest"
     immunebuilder_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/immunebuilder-worker:latest"
     rfantibody_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/rfantibody-worker:latest"
@@ -62,6 +63,10 @@ class GpcrClawConfig:
             boltz2_container_image=os.getenv(
                 "GPCRCLAW_BOLTZ2_CONTAINER_IMAGE",
                 "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:latest",
+            ),
+            thermompnn_container_image=os.getenv(
+                "GPCRCLAW_THERMOMPNN_CONTAINER_IMAGE",
+                "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/thermompnn-worker:latest",
             ),
             chai1_container_image=os.getenv(
                 "GPCRCLAW_CHAI1_CONTAINER_IMAGE",

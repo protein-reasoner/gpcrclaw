@@ -1,0 +1,49 @@
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CONDA_DIR=/opt/conda
+ENV PATH=/opt/conda/bin:$PATH
+ENV THERMOMPNN_REPO=/opt/ThermoMPNN
+ENV THERMOMPNN_SCRIPT=/opt/ThermoMPNN/analysis/custom_inference.py
+ENV THERMOMPNN_MODEL_PATH=/opt/ThermoMPNN/models/thermoMPNN_default.pt
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        bzip2 \
+        ca-certificates \
+        curl \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -o /tmp/miniforge.sh \
+    && bash /tmp/miniforge.sh -b -p "$CONDA_DIR" \
+    && rm /tmp/miniforge.sh \
+    && conda config --system --set channel_priority strict
+
+RUN git clone --depth 1 https://github.com/Kuhlman-Lab/ThermoMPNN.git "$THERMOMPNN_REPO"
+
+RUN mamba install -y -c nvidia -c pytorch -c conda-forge \
+        python=3.10 \
+        pytorch \
+        torchvision \
+        torchaudio \
+        pytorch-cuda=11.8 \
+        pytorch-lightning \
+    && mamba install -y -c bioconda -c conda-forge -c anaconda \
+        biopython \
+        joblib \
+        mmseqs2 \
+        numpy \
+        omegaconf \
+        pandas \
+        tqdm \
+        wandb \
+    && mamba clean -afy
+
+WORKDIR /app
+COPY pyproject.toml /app/
+COPY src /app/src
+
+ENV PYTHONPATH=/app/src:/opt/ThermoMPNN
+
+CMD ["python", "-m", "gpcrclaw.workers.thermompnn", "--manifest", "/mnt/disks/input/manifest.json"]

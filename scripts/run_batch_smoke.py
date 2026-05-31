@@ -15,6 +15,7 @@ if str(SRC) not in sys.path:
 
 from gpcrclaw.backends.base import GpuJobRequest
 from gpcrclaw.backends.google_batch import build_batch_job_payload
+from gpcrclaw.cloud_inputs import add_failure_hints, batch_result_exit_code, batch_should_wait, write_json
 from gpcrclaw.config import GpcrClawConfig
 from gpcrclaw.env import load_env_file
 from gpcrclaw.ids import slugify, utc_now
@@ -26,7 +27,8 @@ def main() -> int:
     parser.add_argument("--gpu-type", choices=["L4", "A100"], required=True)
     parser.add_argument("--job-name")
     parser.add_argument("--preemptible", action="store_true")
-    parser.add_argument("--no-wait", action="store_true")
+    parser.add_argument("--wait", action="store_true", help="Poll until the submitted Batch job reaches a terminal state.")
+    parser.add_argument("--no-wait", action="store_true", help="Deprecated no-op; submission is non-blocking by default.")
     parser.add_argument("--poll-seconds", type=int, default=15)
     parser.add_argument("--timeout-seconds", type=int, default=1800)
     args = parser.parse_args()
@@ -79,18 +81,19 @@ def main() -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = work_dir / "manifest.json"
     config_path = work_dir / "batch-job.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    config_path.write_text(json.dumps(build_batch_job_payload(config, request), indent=2, sort_keys=True) + "\n")
+    write_json(manifest_path, manifest)
+    write_json(config_path, build_batch_job_payload(config, request))
 
     run(["gcloud", "storage", "cp", str(manifest_path), f"{input_uri}/manifest.json"])
     run(["gcloud", "batch", "jobs", "submit", job_name, "--location", config.region, "--config", str(config_path)])
 
     result = {"job_name": job_name, "campaign_id": campaign_id, "input_uri": input_uri, "output_uri": output_uri, "config_path": str(config_path)}
-    if not args.no_wait:
+    if batch_should_wait(args.wait, args.no_wait):
         result["final_state"] = wait_for_job(job_name, config.region, args.poll_seconds, args.timeout_seconds)
         result["outputs"] = list_outputs(output_uri)
+        add_failure_hints(result, job_name=job_name, region=config.region)
     print(json.dumps(result, indent=2, sort_keys=True))
-    return 0
+    return batch_result_exit_code(result.get("final_state"))
 
 
 def run(args: list[str]) -> subprocess.CompletedProcess[str]:

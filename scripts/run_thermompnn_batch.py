@@ -16,14 +16,7 @@ if str(SRC) not in sys.path:
 
 from gpcrclaw.backends.base import GpuJobRequest
 from gpcrclaw.backends.google_batch import build_batch_job_payload
-from gpcrclaw.cloud_inputs import (
-    add_failure_hints,
-    batch_result_exit_code,
-    batch_should_wait,
-    prepare_manifest_for_batch,
-    upload_batch_input,
-    write_json,
-)
+from gpcrclaw.cloud_inputs import add_failure_hints, batch_result_exit_code, batch_should_wait, write_json
 from gpcrclaw.config import GpcrClawConfig
 from gpcrclaw.env import load_env_file
 from gpcrclaw.ids import slugify, utc_now
@@ -31,16 +24,15 @@ from gpcrclaw.worker_contract import validate_manifest
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Submit a Chai-1 verifier worker job to Google Batch.")
-    parser.add_argument("--manifest", type=Path, default=ROOT / "examples/chai1/lpar1_nanobody_verifier_manifest.json")
+    parser = argparse.ArgumentParser(description="Submit a ThermoMPNN worker job to Google Batch.")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "examples/thermompnn/lpar1_nanobody_stability_manifest.json")
+    parser.add_argument("--pdb", type=Path, help="Candidate PDB to stage as /mnt/disks/input/candidate.pdb.")
     parser.add_argument("--job-name")
-    parser.add_argument("--live", action="store_true", help="Execute chai-lab fold instead of the worker dry-run path.")
-    parser.add_argument("--use-msa-server", action="store_true", help="Allow Chai-1 to send protein sequences to the configured MSA server.")
-    parser.add_argument("--use-templates-server", action="store_true", help="Allow Chai-1 to query the configured template server.")
+    parser.add_argument("--live", action="store_true", help="Execute ThermoMPNN instead of the worker dry-run path.")
     parser.add_argument("--wait", action="store_true", help="Poll until the submitted Batch job reaches a terminal state.")
     parser.add_argument("--no-wait", action="store_true", help="Deprecated no-op; submission is non-blocking by default.")
     parser.add_argument("--poll-seconds", type=int, default=30)
-    parser.add_argument("--timeout-seconds", type=int, default=7200)
+    parser.add_argument("--timeout-seconds", type=int, default=3600)
     args = parser.parse_args()
 
     load_env_file()
@@ -49,14 +41,10 @@ def main() -> int:
     validate_manifest(manifest)
     options = dict(manifest.get("worker_options") or {})
     options["dry_run"] = not args.live
-    if args.use_msa_server:
-        options["use_msa_server"] = True
-    if args.use_templates_server:
-        options["use_templates_server"] = True
     manifest["worker_options"] = options
 
     suffix = utc_now().replace(":", "").replace("-", "").lower().replace("z", "")
-    job_name = slugify(args.job_name or f"gpcrclaw-chai1-a100-{suffix}")[:63]
+    job_name = slugify(args.job_name or f"gpcrclaw-thermompnn-a100-{suffix}")[:63]
     campaign_id = manifest["campaign_id"] = job_name.replace("-", "_").upper()
     batch_id = manifest["batch_id"]
     job_id = manifest["job_id"]
@@ -66,33 +54,44 @@ def main() -> int:
     manifest["output_uri"] = output_uri
     manifest["resources"] = {"gpu_type": "A100", "gpu_count": 1}
 
+    staged_pdb_uri = None
+    if args.pdb is not None:
+        if not args.pdb.exists():
+            raise SystemExit(f"Candidate PDB not found: {args.pdb}")
+        candidate = manifest.setdefault("candidate", {})
+        if not isinstance(candidate, dict):
+            raise SystemExit("manifest candidate must be an object")
+        candidate["structure_path"] = "/mnt/disks/input/candidate.pdb"
+        staged_pdb_uri = f"{input_uri}/candidate.pdb"
+
     request = GpuJobRequest(
         campaign_id=campaign_id,
         batch_id=batch_id,
         job_id=job_id,
-        worker_name="chai1",
-        container_image=config.chai1_container_image,
+        worker_name="thermompnn",
+        container_image=config.thermompnn_container_image,
         gpu_type="A100",
         gpu_count=1,
         input_uri=input_uri,
         output_uri=output_uri,
-        timeout_minutes=max(config.timeout_minutes, 120),
+        timeout_minutes=max(config.timeout_minutes, 60),
         max_retries=config.max_retries,
         candidate_id=_candidate_id(manifest),
-        labels={"worker": "chai1", "gpu": "a100"},
+        labels={"worker": "thermompnn", "gpu": "a100"},
         restartable=True,
         preemptible=False,
     )
 
-    work_dir = ROOT / ".gpcrclaw" / "chai1-batch" / job_name
+    work_dir = ROOT / ".gpcrclaw" / "thermompnn-batch" / job_name
     work_dir.mkdir(parents=True, exist_ok=True)
-    staged_manifest = prepare_manifest_for_batch(manifest, source_manifest=args.manifest, work_dir=work_dir)
     manifest_path = work_dir / "manifest.json"
     config_path = work_dir / "batch-job.json"
-    write_json(manifest_path, staged_manifest)
+    write_json(manifest_path, manifest)
     write_json(config_path, build_batch_job_payload(config, request))
 
-    upload_batch_input(input_uri, manifest_path, work_dir / "input_assets")
+    if args.pdb is not None:
+        run(["gcloud", "storage", "cp", str(args.pdb), staged_pdb_uri or f"{input_uri}/candidate.pdb"])
+    run(["gcloud", "storage", "cp", str(manifest_path), f"{input_uri}/manifest.json"])
     run(["gcloud", "batch", "jobs", "submit", job_name, "--location", config.region, "--config", str(config_path)])
 
     result: dict[str, Any] = {
@@ -102,8 +101,7 @@ def main() -> int:
         "output_uri": output_uri,
         "config_path": str(config_path),
         "live": args.live,
-        "use_msa_server": bool(options.get("use_msa_server")),
-        "use_templates_server": bool(options.get("use_templates_server")),
+        "staged_pdb_uri": staged_pdb_uri,
     }
     if batch_should_wait(args.wait, args.no_wait):
         result["final_state"] = wait_for_job(job_name, config.region, args.poll_seconds, args.timeout_seconds)

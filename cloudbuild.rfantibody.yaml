@@ -1,0 +1,13 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    timeout: 7200s
+    args:
+      - build
+      - -f
+      - Dockerfile.rfantibody
+      - -t
+      - us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/rfantibody-worker:latest
+      - .
+images:
+  - us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/rfantibody-worker:latest
+timeout: 7200s

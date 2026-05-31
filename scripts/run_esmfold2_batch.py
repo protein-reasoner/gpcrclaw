@@ -31,12 +31,12 @@ from gpcrclaw.worker_contract import validate_manifest
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Submit a Chai-1 verifier worker job to Google Batch.")
-    parser.add_argument("--manifest", type=Path, default=ROOT / "examples/chai1/lpar1_nanobody_verifier_manifest.json")
+    parser = argparse.ArgumentParser(description="Submit an ESMFold2 worker job to Google Batch.")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "examples/esmfold2/lpar1_nanobody_fold_manifest.json")
     parser.add_argument("--job-name")
-    parser.add_argument("--live", action="store_true", help="Execute chai-lab fold instead of the worker dry-run path.")
-    parser.add_argument("--use-msa-server", action="store_true", help="Allow Chai-1 to send protein sequences to the configured MSA server.")
-    parser.add_argument("--use-templates-server", action="store_true", help="Allow Chai-1 to query the configured template server.")
+    parser.add_argument("--live", action="store_true", help="Execute ESMFold2 instead of the worker dry-run path.")
+    parser.add_argument("--include-target", action="store_true", help="Fold target and candidate together instead of candidate monomer only.")
+    parser.add_argument("--gpu-count", type=int, default=1, choices=[1, 2, 4, 8])
     parser.add_argument("--wait", action="store_true", help="Poll until the submitted Batch job reaches a terminal state.")
     parser.add_argument("--no-wait", action="store_true", help="Deprecated no-op; submission is non-blocking by default.")
     parser.add_argument("--poll-seconds", type=int, default=30)
@@ -48,15 +48,15 @@ def main() -> int:
     manifest = json.loads(args.manifest.read_text())
     validate_manifest(manifest)
     options = dict(manifest.get("worker_options") or {})
-    options["dry_run"] = not args.live
-    if args.use_msa_server:
-        options["use_msa_server"] = True
-    if args.use_templates_server:
-        options["use_templates_server"] = True
+    nested = dict(options.get("esmfold2") or {})
+    nested["dry_run"] = not args.live
+    if args.include_target:
+        nested["include_target"] = True
+    options["esmfold2"] = nested
     manifest["worker_options"] = options
 
     suffix = utc_now().replace(":", "").replace("-", "").lower().replace("z", "")
-    job_name = slugify(args.job_name or f"gpcrclaw-chai1-a100-{suffix}")[:63]
+    job_name = slugify(args.job_name or f"gpcrclaw-esmfold2-a100-{suffix}")[:63]
     campaign_id = manifest["campaign_id"] = job_name.replace("-", "_").upper()
     batch_id = manifest["batch_id"]
     job_id = manifest["job_id"]
@@ -64,27 +64,27 @@ def main() -> int:
     input_uri = f"{base_uri}/input"
     output_uri = f"{base_uri}/output"
     manifest["output_uri"] = output_uri
-    manifest["resources"] = {"gpu_type": "A100", "gpu_count": 1}
+    manifest["resources"] = {"gpu_type": "A100", "gpu_count": args.gpu_count}
 
     request = GpuJobRequest(
         campaign_id=campaign_id,
         batch_id=batch_id,
         job_id=job_id,
-        worker_name="chai1",
-        container_image=config.chai1_container_image,
+        worker_name="esmfold2",
+        container_image=config.esmfold2_container_image,
         gpu_type="A100",
-        gpu_count=1,
+        gpu_count=args.gpu_count,
         input_uri=input_uri,
         output_uri=output_uri,
         timeout_minutes=max(config.timeout_minutes, 120),
         max_retries=config.max_retries,
         candidate_id=_candidate_id(manifest),
-        labels={"worker": "chai1", "gpu": "a100"},
+        labels={"worker": "esmfold2", "gpu": "a100"},
         restartable=True,
         preemptible=False,
     )
 
-    work_dir = ROOT / ".gpcrclaw" / "chai1-batch" / job_name
+    work_dir = ROOT / ".gpcrclaw" / "esmfold2-batch" / job_name
     work_dir.mkdir(parents=True, exist_ok=True)
     staged_manifest = prepare_manifest_for_batch(manifest, source_manifest=args.manifest, work_dir=work_dir)
     manifest_path = work_dir / "manifest.json"
@@ -102,8 +102,8 @@ def main() -> int:
         "output_uri": output_uri,
         "config_path": str(config_path),
         "live": args.live,
-        "use_msa_server": bool(options.get("use_msa_server")),
-        "use_templates_server": bool(options.get("use_templates_server")),
+        "include_target": bool(nested.get("include_target")),
+        "gpu_count": args.gpu_count,
     }
     if batch_should_wait(args.wait, args.no_wait):
         result["final_state"] = wait_for_job(job_name, config.region, args.poll_seconds, args.timeout_seconds)
