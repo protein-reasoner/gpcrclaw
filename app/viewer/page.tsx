@@ -58,7 +58,7 @@ function ViewerContent() {
             <ArrowLeft size={16} /> Back to Dashboard
           </Link>
           <span style={{ color: "#334155" }}>|</span>
-          <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0, tracking: "-0.02em" }}>
+          <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>
             GPCRclaw Structure Viewer
           </h1>
         </div>
