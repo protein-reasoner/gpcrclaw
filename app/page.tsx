@@ -107,7 +107,7 @@ export default function Home() {
                 <span className="label">Active path</span>
                 <h2>{demoCampaign.name}</h2>
               </div>
-              <span className="status-pill live">cloud</span>
+              <span className="status-pill live">local demo</span>
             </div>
             <dl className="target-grid">
               <div>
@@ -128,9 +128,9 @@ export default function Home() {
               </div>
             </dl>
             <div className="mini-model-stack" aria-label="Model execution preview">
-              <p><Cpu size={15} aria-hidden="true" /><strong>A100 GPU VM</strong><span>running</span></p>
-              <p><Microscope size={15} aria-hidden="true" /><strong>RFantibody</strong><span>design</span></p>
-              <p><Activity size={15} aria-hidden="true" /><strong>Boltz-2</strong><span>evaluate</span></p>
+              <p><Cpu size={15} aria-hidden="true" /><strong>Local run</strong><span>ready</span></p>
+              <p><Microscope size={15} aria-hidden="true" /><strong>RFantibody interface</strong><span>candidates</span></p>
+              <p><Activity size={15} aria-hidden="true" /><strong>Validation loop</strong><span>retry + rank</span></p>
             </div>
           </div>
         </div>
@@ -178,8 +178,8 @@ export default function Home() {
 
       <section className="content-band" id="workflow">
         <div className="section-heading">
-          <h2>Live workflow</h2>
-          <p>The live path now follows one GPU VM from launch through drug design and model-based evaluation.</p>
+          <h2>Demo workflow</h2>
+          <p>The local path follows one campaign from target constraints through candidate generation, validation, retry, and ranked return.</p>
         </div>
         <div className="stage-list">
           {pipelineStages.map((stage, index) => (

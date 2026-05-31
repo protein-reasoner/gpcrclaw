@@ -37,6 +37,17 @@ type LaunchRecord = {
 };
 
 export async function cloudSnapshot() {
+  if (process.env.GPCRCLAW_ENABLE_CLOUD_SNAPSHOT !== "1") {
+    return {
+      projectId: PROJECT_ID,
+      region: DEFAULT_REGION,
+      builds: {},
+      images: [],
+      jobs: [],
+      launches: []
+    };
+  }
+
   const [rfantibodyBuild, esmfold2Build, images, jobs, launches] = await Promise.all([
     describeBuild(RFANTIBODY_BUILD_ID),
     describeBuild(ESMFOLD2_BUILD_ID),

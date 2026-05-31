@@ -28,8 +28,8 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
           <span className="label">Campaign ID</span>
           <h1>{id}</h1>
           <p>
-            Campaign state for {demoCampaign.target}. The launch controls on the home page submit the
-            real RFantibody and ESMFold2 Google Batch jobs and keep the research boundary explicit.
+            Campaign state for {demoCampaign.target}. This demo uses local RFantibody-interface
+            candidate artifacts and a validation/retry loop so the full product flow is visible.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
           </div>
           <div>
             <span>Evidence</span>
-            <strong>live cloud</strong>
+            <strong>{demoCampaign.evidenceMode}</strong>
           </div>
           <div>
             <span>Status</span>
@@ -55,12 +55,13 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
         <section className="candidate-section" aria-labelledby="candidate-heading">
           <div className="section-heading">
             <h2 id="candidate-heading">Ranked candidates</h2>
-            <p>Seeded examples remain visible until the live cloud outputs land in the configured GCS artifact root.</p>
+            <p>Local demo results backed by generated sequence, FASTA, binder PDB, and downstream manifest artifacts.</p>
           </div>
           <div className="candidate-table" role="table" aria-label="Ranked candidate table">
             <div className="candidate-row table-head" role="row">
               <span>Rank</span>
               <span>Candidate</span>
+              <span>CDR3</span>
               <span>Interface</span>
               <span>Specificity</span>
               <span>Developability</span>
@@ -70,6 +71,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
               <div className="candidate-row" role="row" key={candidate.id}>
                 <span>{candidate.rank}</span>
                 <strong>{candidate.id}</strong>
+                <span>{candidate.cdr3Length} aa</span>
                 <span>{candidate.interfaceScore.toFixed(3)}</span>
                 <span>{candidate.specificityMargin.toFixed(3)}</span>
                 <span>{candidate.developabilityScore.toFixed(3)}</span>

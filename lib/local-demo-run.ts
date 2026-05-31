@@ -86,7 +86,7 @@ function demoRunSnapshot(run: PersistedRun): DemoRunResult {
   const final = elapsedMs >= 6_200;
   const validationStatus = final ? "passed" : retried ? "retrying" : validated ? "failed" : "pending";
   const retryCount = retried ? 1 : 0;
-  const rootUri = `local://.gpcrclaw/artifacts/campaigns/local/${run.runId}`;
+  const rootUri = "local://.gpcrclaw/examples/rfantibody/output";
 
   return {
     runId: run.runId,
@@ -158,38 +158,38 @@ function buildCandidates(rootUri: string, generated: boolean, validated: boolean
 
   const candidates: DemoRunCandidate[] = [
     {
-      id: "LPAR1_NB_001",
+      id: "LPAR1_RFNB_001",
       generation: "generated",
       validation: validated ? "passed" : "pending",
       retryCount: 0,
-      outputUri: `${rootUri}/candidates/LPAR1_NB_001/metrics.json`,
-      note: "passes specificity and developability gates"
+      outputUri: `${rootUri}/boltz2_manifests/LPAR1_RFNB_001.json`,
+      note: "ECL2-targeted VHH demo candidate with local FASTA and binder PDB artifacts"
     },
     {
-      id: "LPAR1_NB_002",
+      id: "LPAR1_RFNB_004",
       generation: "generated",
       validation: validated ? "passed" : "pending",
       retryCount: 0,
-      outputUri: `${rootUri}/candidates/LPAR1_NB_002/metrics.json`,
-      note: "highest rank score after validation"
+      outputUri: `${rootUri}/boltz2_manifests/LPAR1_RFNB_004.json`,
+      note: "passes specificity and developability gates in the local demo scorer"
     },
     {
-      id: "LPAR1_NB_004",
+      id: "LPAR1_RFNB_003",
       generation: "generated",
       validation: validated ? "failed" : "pending",
       retryCount: 0,
-      outputUri: `${rootUri}/candidates/LPAR1_NB_004/metrics.json`,
-      note: "failed missing stability evidence"
+      outputUri: `${rootUri}/boltz2_manifests/LPAR1_RFNB_003.json`,
+      note: "failed the first validation pass and triggers a replacement candidate"
     }
   ];
 
   if (retried) {
     candidates.push({
-      id: "LPAR1_NB_006",
+      id: "LPAR1_RFNB_002",
       generation: "regenerated",
       validation: "passed",
       retryCount: 1,
-      outputUri: `${rootUri}/candidates/LPAR1_NB_006/metrics.json`,
+      outputUri: `${rootUri}/boltz2_manifests/LPAR1_RFNB_002.json`,
       note: "replacement candidate from retry wave"
     });
   }

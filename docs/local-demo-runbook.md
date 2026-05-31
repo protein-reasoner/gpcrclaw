@@ -1,0 +1,49 @@
+# GPCRclaw Local Demo Runbook
+
+## Demo Goal
+
+Show one complete LPAR1 nanobody campaign flow without relying on cloud GPU availability:
+
+```text
+LPAR1 ECL2 target constraints
+-> local RFantibody-interface candidate artifacts
+-> validation failure
+-> retry/regeneration
+-> ranked top candidates
+```
+
+## Setup
+
+```bash
+npm run dev -- --port 3000
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Talk Track
+
+1. GPCRclaw starts from a structure-conditioned design brief, not a sequence-only prompt.
+2. This demo target is `LPAR1`, using template `7TD0`, focused on ECL2 residues `188-211`.
+3. The campaign compiles target, hotspot, VHH, and CDR3 constraints into an inspectable job.
+4. Click `Run local loop`.
+5. The loop moves through generation, validation, a failed candidate, retry/regeneration, and final ranked candidates.
+6. Open `Demo Campaign` to show the ranked candidate table with CDR3 length and scoring columns.
+7. State the boundary clearly: this is local artifact-backed demo evidence, not live experimental or clinical validation.
+
+## Showable Artifacts
+
+```text
+.gpcrclaw/examples/rfantibody/output/tables/generated_candidates.json
+.gpcrclaw/examples/rfantibody/output/sequences/candidates.fasta
+.gpcrclaw/examples/rfantibody/output/structures/LPAR1_RFNB_001_binder.pdb
+.gpcrclaw/examples/rfantibody/output/reports/ranked_designs.csv
+.gpcrclaw/examples/rfantibody/output/reports/campaign_report.json
+```
+
+## Backup Line
+
+The live cloud path is separate from this demo. The local path is intentionally used here so the product story remains reliable even when GPU capacity or worker image dependencies are still being fixed.

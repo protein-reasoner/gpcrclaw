@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Activity, CheckCircle2, CircleDashed, Cloud, Cpu, FlaskConical, Play, RefreshCw, RotateCcw, Server, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, CheckCircle2, CircleDashed, Cpu, Database, FileCheck, FlaskConical, RefreshCw, RotateCcw, Server, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 type DemoRunStage = {
@@ -101,31 +101,11 @@ type RunsSnapshot = {
   runs?: PipelineRun[];
 };
 
-const launchOptions: Array<{ workers: ModelWorker[]; label: string; detail: string }> = [
-  {
-    workers: ["rfantibody", "boltz2"],
-    label: "Start primary pipeline",
-    detail: "RFantibody VHH design plus Boltz-2 ipSAE/contact filtering"
-  },
-  {
-    workers: ["rfantibody"],
-    label: "Launch RFantibody",
-    detail: "One real A100 RFantibody/RFdiffusion design job"
-  },
-  {
-    workers: ["boltz2"],
-    label: "Launch Boltz-2",
-    detail: "One real A100 Boltz-2 ipSAE/contact scoring job"
-  }
-];
-
 export function CloudLaunchPanel() {
   const [snapshot, setSnapshot] = useState<CampaignSnapshot | null>(null);
   const [runsSnapshot, setRunsSnapshot] = useState<RunsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [launching, setLaunching] = useState<string | null>(null);
   const [startingLocalRun, setStartingLocalRun] = useState(false);
-  const [startingCampaignLoop, setStartingCampaignLoop] = useState(false);
   const [message, setMessage] = useState<string>("");
 
   async function refresh() {
@@ -154,29 +134,6 @@ export function CloudLaunchPanel() {
       setSnapshot((current) => ({ ...(current || {}), run: payload.run }));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not load local run status");
-    }
-  }
-
-  async function launch(workers: ModelWorker[]) {
-    const key = workers.join("+");
-    setLaunching(key);
-    setMessage("");
-    try {
-      const response = await fetch("/api/runs", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ workers, live: true, wait: false })
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "Run submission failed");
-      }
-      setMessage(`Run ${payload.run?.id || ""} submitted`.trim());
-      await refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Run submission failed");
-    } finally {
-      setLaunching(null);
     }
   }
 
@@ -217,28 +174,6 @@ export function CloudLaunchPanel() {
     }
   }
 
-  async function startCampaignLoop() {
-    setStartingCampaignLoop(true);
-    setMessage("");
-    try {
-      const response = await fetch("/api/campaign", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "start-campaign" })
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || payload.run?.error || "Campaign loop failed");
-      }
-      setMessage(`Campaign loop ${payload.run?.runId || ""} started`.trim());
-      await refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Campaign loop failed");
-    } finally {
-      setStartingCampaignLoop(false);
-    }
-  }
-
   useEffect(() => {
     void refresh();
   }, []);
@@ -264,32 +199,22 @@ export function CloudLaunchPanel() {
     return () => window.clearInterval(timer);
   }, [snapshot?.campaignRuns?.runs]);
 
-  const builds = snapshot?.cloud?.builds || {};
-  const liveImages = useMemo(() => {
-    return (snapshot?.cloud?.images || []).filter((image) => image.tags?.includes("latest"));
-  }, [snapshot]);
-  const jobs = snapshot?.cloud?.jobs || [];
-  const launches = snapshot?.cloud?.launches || [];
   const run = snapshot?.run;
   const campaignRuns = snapshot?.campaignRuns?.runs || [];
   const pipelineRuns = runsSnapshot?.runs || [];
   const latestPipelineRun = pipelineRuns[0];
 
   return (
-    <section className="cloud-panel" aria-label="Cloud launch controls">
+    <section className="cloud-panel" aria-label="Local demo controls">
       <div className="cloud-panel-heading">
         <div>
-          <span className="label">Live cloud control</span>
-          <h2>Run the full campaign loop locally, then launch real GPU jobs when needed</h2>
+          <span className="label">Local demo control</span>
+          <h2>Run one LPAR1 campaign loop from target constraints to ranked candidates</h2>
         </div>
         <div className="cloud-actions">
           <button className="button local-run-button" type="button" onClick={startLocalRun} disabled={startingLocalRun}>
             <RotateCcw size={16} aria-hidden="true" />
             {startingLocalRun ? "Starting..." : "Run local loop"}
-          </button>
-          <button className="button local-run-button" type="button" onClick={startCampaignLoop} disabled={startingCampaignLoop}>
-            <Play size={16} aria-hidden="true" />
-            {startingCampaignLoop ? "Submitting..." : "Run real loop"}
           </button>
           <button className="icon-button" type="button" onClick={refresh} disabled={loading} aria-label="Refresh cloud status">
             <RefreshCw size={17} aria-hidden="true" />
@@ -300,85 +225,32 @@ export function CloudLaunchPanel() {
       <CloudRuntimeStack run={latestPipelineRun} projectId={snapshot?.cloud?.projectId} region={snapshot?.cloud?.region} />
 
       <div className="cloud-status-grid">
-        <StatusTile icon={Cloud} label="Project" value={snapshot?.cloud?.projectId || "not configured"} detail={snapshot?.cloud?.region || ""} />
-        <StatusTile icon={Server} label="RFantibody build" value={builds.rfantibody?.status || "unknown"} detail="rfantibody-worker:latest" />
-        <StatusTile icon={Activity} label="Boltz-2 image" value={imageStatus(liveImages, "boltz2-worker")} detail="boltz2-worker:latest" />
-        <StatusTile icon={FlaskConical} label="Runs" value={String(pipelineRuns.length)} detail="local .gpcrclaw records" />
-        <StatusTile icon={RefreshCw} label="Campaign loops" value={String(campaignRuns.length)} detail={campaignRuns[0]?.stage || "none started"} />
+        <StatusTile icon={Server} label="Mode" value="local demo" detail="no cloud launch required" />
+        <StatusTile icon={Database} label="Target" value="LPAR1" detail="7TD0 ECL2 residues 188-211" />
+        <StatusTile icon={FlaskConical} label="Candidates" value="4" detail="RFantibody-interface artifacts" />
+        <StatusTile icon={FileCheck} label="Report" value={run?.finalReturnedResult ? "ready" : "run loop"} detail="validation + retry + ranking" />
+        <StatusTile icon={Activity} label="Artifact root" value=".gpcrclaw" detail="examples/rfantibody/output" />
       </div>
 
       {run ? <RunTimeline run={run} /> : null}
 
-      <div className="launch-grid">
-        {launchOptions.map((option) => (
-          <button
-            className="launch-card"
-            type="button"
-            key={option.workers.join("+")}
-            onClick={() => launch(option.workers)}
-            disabled={Boolean(launching)}
-          >
-            <span>
-              <Play size={16} aria-hidden="true" />
-              {launching === option.workers.join("+") ? "Submitting..." : option.label}
-            </span>
-            <small>{option.detail}</small>
-          </button>
-        ))}
-      </div>
-
-      {pipelineRuns.slice(0, 3).map((pipelineRun) => (
-        <PipelineRunPanel run={pipelineRun} onRetry={retry} key={pipelineRun.id} />
-      ))}
-
       <div className="cloud-lists">
         <div>
-          <h3>Published images</h3>
-          {liveImages.length ? (
-            liveImages.slice(0, 5).map((image) => (
-              <p key={image.package}>
-                <strong>{image.package?.split("/").pop()}</strong>
-                <span>{image.updateTime || "latest"}</span>
-              </p>
-            ))
-          ) : (
-            <p>No latest model images visible yet.</p>
-          )}
+          <h3>Local artifacts</h3>
+          <p><strong>generated_candidates.json</strong><span>sequence table</span></p>
+          <p><strong>candidates.fasta</strong><span>VHH FASTA</span></p>
+          <p><strong>LPAR1_RFNB_001_binder.pdb</strong><span>binder structure</span></p>
         </div>
         <div>
-          <h3>Run records</h3>
-          {pipelineRuns.length ? (
-            pipelineRuns.slice(0, 5).map((pipelineRun) => (
-              <p key={pipelineRun.id}>
-                <strong>{pipelineRun.id}</strong>
-                <span>{pipelineRun.status}</span>
-              </p>
-            ))
-          ) : launches.length ? (
-            launches.slice(0, 5).map((launch) => (
-              <p key={`${launch.worker}-${launch.launchedAt}`}>
-                <strong>{launch.jobName || launch.worker}</strong>
-                <span>{launch.batch?.status?.state || (launch.outputs?.length ? "OUTPUTS" : "SUBMITTED")}</span>
-              </p>
-            ))
-          ) : jobs.length ? (
-            jobs.slice(0, 5).map((job) => (
-              <p key={job.name}>
-                <strong>{job.name?.split("/").pop()}</strong>
-                <span>{job.status?.state || "UNKNOWN"}</span>
-              </p>
-            ))
-          ) : (
-            <p>No recent Batch jobs returned.</p>
-          )}
+          <h3>Validation story</h3>
+          <p><strong>LPAR1_RFNB_003</strong><span>fails first validation</span></p>
+          <p><strong>LPAR1_RFNB_002</strong><span>returned after retry</span></p>
+          <p><strong>Top 3</strong><span>ranked by interface, specificity, developability</span></p>
         </div>
         <div>
-          <h3>Real campaign loops</h3>
-          {campaignRuns.length ? (
-            campaignRuns.slice(0, 5).map((campaignRun) => <CampaignRunStatus run={campaignRun} key={campaignRun.runId} />)
-          ) : (
-            <p>No RFantibody to Boltz-2 loop has been started.</p>
-          )}
+          <h3>Cloud status</h3>
+          <p><strong>disabled for demo</strong><span>local flow is the primary path</span></p>
+          <p><strong>known blocker</strong><span>RFantibody image dependency fix pending</span></p>
         </div>
       </div>
 
@@ -400,37 +272,37 @@ function CloudRuntimeStack({
   const jobs = latestAttempt?.jobs || [];
   const drugDesignJob = jobs.find((job) => job.worker === "rfantibody");
   const evaluationJob = jobs.find((job) => ["boltz2", "chai1", "immunebuilder", "thermompnn", "esmfold2"].includes(job.worker));
-  const designState = drugDesignJob?.batch?.status?.state || (drugDesignJob?.ok ? "RUNNING" : "RUNNING");
-  const evaluationState = evaluationJob?.batch?.status?.state || (evaluationJob?.ok ? "RUNNING" : "RUNNING");
+  const designState = drugDesignJob?.batch?.status?.state || (drugDesignJob?.ok ? "submitted" : "ready");
+  const evaluationState = evaluationJob?.batch?.status?.state || (evaluationJob?.ok ? "submitted" : "ready");
 
   return (
-    <div className="runtime-stack" aria-label="GPU VM runtime state">
+    <div className="runtime-stack" aria-label="Local demo runtime state">
       <div className="runtime-vm">
         <div className="runtime-icon">
           <Cpu size={22} aria-hidden="true" />
         </div>
         <div>
-          <span className="label">GPU VM</span>
-          <h3>A100 worker VM running</h3>
-          <p>{projectId ? `${projectId}${region ? ` / ${region}` : ""}` : "Google Batch GPU runtime"}</p>
+          <span className="label">Demo runtime</span>
+          <h3>Local campaign loop ready</h3>
+          <p>{projectId ? `${projectId}${region ? ` / ${region}` : ""}` : "Local artifact-backed run"}</p>
         </div>
-        <span className="runtime-state">running</span>
+        <span className="runtime-state">ready</span>
       </div>
 
       <div className="runtime-model-grid">
         <RuntimeModelCard
           icon={FlaskConical}
-          title="Drug design model"
-          worker="RFantibody / RFdiffusion"
+          title="Candidate generation"
+          worker="RFantibody interface demo"
           state={designState}
-          detail={drugDesignJob?.jobName || "generating LPAR1 ECL2 VHH candidates"}
+          detail={drugDesignJob?.jobName || "generated LPAR1 ECL2 VHH candidates in local artifacts"}
         />
         <RuntimeModelCard
           icon={Activity}
-          title="Evaluation model"
-          worker={evaluationJob?.worker || "Boltz-2"}
+          title="Validation loop"
+          worker={evaluationJob?.worker || "local scorer"}
           state={evaluationState}
-          detail={evaluationJob?.jobName || "scoring ipSAE, epitope contacts, ipTM, pTM, and VHH developability"}
+          detail={evaluationJob?.jobName || "checks epitope fit, specificity, developability, retry, and rank"}
         />
       </div>
     </div>

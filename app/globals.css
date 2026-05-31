@@ -1157,8 +1157,8 @@ p {
   border-bottom: 1px solid var(--border);
   display: grid;
   gap: 16px;
-  grid-template-columns: 0.5fr 1.4fr repeat(4, 1fr);
-  min-width: 760px;
+  grid-template-columns: 0.5fr 1.5fr 0.8fr repeat(4, 1fr);
+  min-width: 880px;
   padding: 16px 18px;
 }
 

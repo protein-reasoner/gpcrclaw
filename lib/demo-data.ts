@@ -5,50 +5,61 @@ export const demoCampaign = {
   template: "7TD0",
   ecl2Range: "188-211",
   hotspots: ["R190", "Y194", "D198", "K201", "F205"],
-  candidateCount: 10
+  candidateCount: 4,
+  evidenceMode: "local demo",
+  artifactRoot: ".gpcrclaw/examples/rfantibody/output"
 } as const;
 
 export const pipelineStages = [
   {
-    name: "Boot GPU VM",
-    description: "Start the A100 worker VM, attach the LPAR1 campaign inputs, and keep the run record tied to the cloud job.",
-    state: "running"
+    name: "Compile target brief",
+    description: "Load LPAR1, 7TD0, ECL2 residues 188-211, and hotspot constraints into one design job.",
+    state: "done"
   },
   {
-    name: "Run drug design model",
-    description: "Execute RFantibody/RFdiffusion on the GPU VM to generate ECL2-focused VHH candidates and output artifacts.",
-    state: "running"
+    name: "Generate VHH candidates",
+    description: "Emit local RFantibody-interface demo candidates with sequences, CDRs, FASTA files, binder PDBs, and downstream manifests.",
+    state: "done"
   },
   {
-    name: "Run evaluation model",
-    description: "Filter and gate generated candidates with Boltz-2 ipSAE, epitope contacts, ipTM, pTM, VHH developability checks, and structure artifacts before ranking returned results.",
-    state: "ready"
+    name: "Validate and rank",
+    description: "Run the local loop through validation, retry one failed candidate, and return ranked research-support dossiers.",
+    state: "demo-ready"
   }
 ] as const;
 
 export const rankedCandidates = [
   {
     rank: 1,
-    id: "LPAR1_NB_002",
+    id: "LPAR1_RFNB_001",
+    cdr3: "VRRTWHGTSYGERLFDV",
+    cdr3Length: 17,
     interfaceScore: 0.863,
     specificityMargin: 0.4,
     developabilityScore: 0.842,
-    rankScore: 0.7017
+    rankScore: 0.7017,
+    artifactPath: ".gpcrclaw/examples/rfantibody/output/structures/LPAR1_RFNB_001_binder.pdb"
   },
   {
     rank: 2,
-    id: "LPAR1_NB_001",
+    id: "LPAR1_RFNB_004",
+    cdr3: "LSADRKQVDKMIT",
+    cdr3Length: 13,
     interfaceScore: 0.817,
     specificityMargin: 0.363,
     developabilityScore: 0.767,
-    rankScore: 0.649
+    rankScore: 0.649,
+    artifactPath: ".gpcrclaw/examples/rfantibody/output/structures/LPAR1_RFNB_004_binder.pdb"
   },
   {
     rank: 3,
-    id: "LPAR1_NB_003",
+    id: "LPAR1_RFNB_002",
+    cdr3: "YPRYGYATDC",
+    cdr3Length: 10,
     interfaceScore: 0.792,
     specificityMargin: 0.311,
     developabilityScore: 0.751,
-    rankScore: 0.618
+    rankScore: 0.618,
+    artifactPath: ".gpcrclaw/examples/rfantibody/output/structures/LPAR1_RFNB_002_binder.pdb"
   }
 ] as const;
