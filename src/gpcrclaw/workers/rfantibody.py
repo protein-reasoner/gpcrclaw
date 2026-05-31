@@ -235,18 +235,35 @@ def default_rfantibody_commands(options: dict[str, Any]) -> list[list[str]]:
         launcher
         + [
             "rfdiffusion",
-            "--target",
+            "-t",
             str(target_structure),
-            "--framework",
+            "-f",
             str(framework_pdb),
             "--output-quiver",
             str(diffusion_qv),
-            "--num-designs",
+            "-n",
             count,
         ],
-        launcher + ["proteinmpnn", "--input-quiver", str(diffusion_qv), "--output-quiver", str(mpnn_qv)],
-        launcher + ["rf2", "--input-quiver", str(mpnn_qv), "--output-quiver", str(rf2_qv)],
-        launcher + ["qvextract", str(rf2_qv), "--output-dir", str(output_dir / "final_designs")],
+        launcher
+        + [
+            "proteinmpnn",
+            "-q",
+            str(diffusion_qv),
+            "--output-quiver",
+            str(mpnn_qv),
+            "-n",
+            str(int(options.get("seqs_per_struct", 4))),
+            "-t",
+            str(options.get("temperature", 0.2)),
+        ],
+        launcher + ["rf2", "-q", str(mpnn_qv), "--output-quiver", str(rf2_qv), "-r", str(int(options.get("rf2_recycles", 10)))],
+        [
+            "bash",
+            "-lc",
+            f"cd {shlex.quote(str(output_dir))} && "
+            f"{shlex.join(launcher + ['qvscorefile', rf2_qv.name])} && "
+            f"{shlex.join(launcher + ['qvextract', rf2_qv.name])}",
+        ],
     ]
     if hotspot_arg:
         commands[0].extend(["--hotspots", hotspot_arg])
