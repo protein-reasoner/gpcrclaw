@@ -11,6 +11,14 @@ type CampaignSnapshot = {
     builds?: Record<string, { status?: string; logUrl?: string; images?: string[] }>;
     images?: Array<{ package?: string; tags?: string[]; updateTime?: string }>;
     jobs?: Array<{ name?: string; status?: { state?: string }; labels?: Record<string, string>; createTime?: string }>;
+    launches?: Array<{
+      launchedAt?: string;
+      worker?: string;
+      jobName?: string;
+      outputUri?: string;
+      batch?: { status?: { state?: string } };
+      outputs?: string[];
+    }>;
   };
 };
 
@@ -83,6 +91,7 @@ export function CloudLaunchPanel() {
     return (snapshot?.cloud?.images || []).filter((image) => image.tags?.includes("latest"));
   }, [snapshot]);
   const jobs = snapshot?.cloud?.jobs || [];
+  const launches = snapshot?.cloud?.launches || [];
 
   return (
     <section className="cloud-panel" aria-label="Cloud launch controls">
@@ -100,7 +109,7 @@ export function CloudLaunchPanel() {
         <StatusTile icon={Cloud} label="Project" value={snapshot?.cloud?.projectId || "loading"} detail={snapshot?.cloud?.region || ""} />
         <StatusTile icon={Server} label="RFantibody build" value={builds.rfantibody?.status || "unknown"} detail="rfantibody-worker:latest" />
         <StatusTile icon={Activity} label="ESMFold2 build" value={builds.esmfold2?.status || "unknown"} detail="esmfold2-worker:latest" />
-        <StatusTile icon={FlaskConical} label="Batch jobs" value={String(jobs.length)} detail="latest us-central1 jobs" />
+        <StatusTile icon={FlaskConical} label="Launches" value={String(launches.length)} detail="website-submitted jobs" />
       </div>
 
       <div className="launch-grid">
@@ -130,8 +139,15 @@ export function CloudLaunchPanel() {
           )}
         </div>
         <div>
-          <h3>Recent jobs</h3>
-          {jobs.length ? (
+          <h3>Website launches</h3>
+          {launches.length ? (
+            launches.slice(0, 5).map((launch) => (
+              <p key={`${launch.worker}-${launch.launchedAt}`}>
+                <strong>{launch.jobName || launch.worker}</strong>
+                <span>{launch.batch?.status?.state || (launch.outputs?.length ? "OUTPUTS" : "SUBMITTED")}</span>
+              </p>
+            ))
+          ) : jobs.length ? (
             jobs.slice(0, 5).map((job) => (
               <p key={job.name}>
                 <strong>{job.name?.split("/").pop()}</strong>
