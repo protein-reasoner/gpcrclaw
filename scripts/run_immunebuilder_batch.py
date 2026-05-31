@@ -16,6 +16,7 @@ if str(SRC) not in sys.path:
 
 from gpcrclaw.backends.base import GpuJobRequest
 from gpcrclaw.backends.google_batch import build_batch_job_payload
+from gpcrclaw.cloud_inputs import add_failure_hints, batch_result_exit_code, prepare_manifest_for_batch, upload_batch_input, write_json
 from gpcrclaw.config import GpcrClawConfig
 from gpcrclaw.env import load_env_file
 from gpcrclaw.ids import slugify, utc_now
@@ -71,12 +72,13 @@ def main() -> int:
 
     work_dir = ROOT / ".gpcrclaw" / "immunebuilder-batch" / job_name
     work_dir.mkdir(parents=True, exist_ok=True)
+    staged_manifest = prepare_manifest_for_batch(manifest, source_manifest=args.manifest, work_dir=work_dir)
     manifest_path = work_dir / "manifest.json"
     config_path = work_dir / "batch-job.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    config_path.write_text(json.dumps(build_batch_job_payload(config, request), indent=2, sort_keys=True) + "\n")
+    write_json(manifest_path, staged_manifest)
+    write_json(config_path, build_batch_job_payload(config, request))
 
-    run(["gcloud", "storage", "cp", str(manifest_path), f"{input_uri}/manifest.json"])
+    upload_batch_input(input_uri, manifest_path, work_dir / "input_assets")
     run(["gcloud", "batch", "jobs", "submit", job_name, "--location", config.region, "--config", str(config_path)])
 
     result: dict[str, Any] = {
@@ -90,8 +92,9 @@ def main() -> int:
     if not args.no_wait:
         result["final_state"] = wait_for_job(job_name, config.region, args.poll_seconds, args.timeout_seconds)
         result["outputs"] = list_outputs(output_uri)
+        add_failure_hints(result, job_name=job_name, region=config.region)
     print(json.dumps(result, indent=2, sort_keys=True))
-    return 0
+    return batch_result_exit_code(result.get("final_state"))
 
 
 def _candidate_id(manifest: dict[str, Any]) -> str | None:
