@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const ROOT = process.cwd();
-const PROJECT_ID = process.env.GPCRCLAW_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || "build-wgemini26sfo-2005";
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GPCRCLAW_PROJECT_ID || "build-wgemini26sfo-2005";
 const DEFAULT_REGION = process.env.GPCRCLAW_REGION || "us-central1";
 const RFANTIBODY_BUILD_ID = process.env.GPCRCLAW_RFANTIBODY_BUILD_ID || "335a71f4-7680-41b1-ae50-7f8b3e87d178";
 const ESMFOLD2_BUILD_ID = process.env.GPCRCLAW_ESMFOLD2_BUILD_ID || "384f8b72-53c3-4261-9f6f-95fd6087aae5";
@@ -20,7 +20,7 @@ type CommandResult = {
   stderr: string;
 };
 
-export type LaunchWorker = "rfantibody" | "esmfold2" | "rfantibody-fleet";
+export type LaunchWorker = "rfantibody" | "boltz2" | "esmfold2" | "rfantibody-fleet";
 
 type LaunchRecord = {
   launchedAt: string;
@@ -95,6 +95,16 @@ export async function launchWorker(worker: LaunchWorker) {
     ]));
   }
 
+  if (worker === "boltz2") {
+    return persistLaunch(worker, await runJson("python3", [
+      "scripts/run_boltz2_batch.py",
+      "--job-name",
+      uniqueJobName("boltz"),
+      "--live",
+      "--no-wait"
+    ]));
+  }
+
   return persistLaunch(worker, await runJson("python3", [
     "scripts/run_esmfold2_batch.py",
     "--job-name",
@@ -107,6 +117,9 @@ export async function launchWorker(worker: LaunchWorker) {
 }
 
 async function describeBuild(buildId: string) {
+  if (!PROJECT_ID || !buildId) {
+    return { ok: false, error: "Set GOOGLE_CLOUD_PROJECT/GPCRCLAW_PROJECT_ID and worker build IDs in .env." };
+  }
   const result = await runCommand("gcloud", [
     "builds",
     "describe",
@@ -119,6 +132,9 @@ async function describeBuild(buildId: string) {
 }
 
 async function listImages() {
+  if (!PROJECT_ID) {
+    return [];
+  }
   const result = await runCommand("gcloud", [
     "artifacts",
     "docker",

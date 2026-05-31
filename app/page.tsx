@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, ArrowRight, FlaskConical, Layers3, ShieldCheck } from "lucide-react";
+import { Activity, ArrowRight, Layers3, ShieldCheck } from "lucide-react";
 import { demoCampaign, pipelineStages } from "@/lib/demo-data";
 import { CloudLaunchPanel } from "@/app/components/CloudLaunchPanel";
 
@@ -44,12 +44,9 @@ export default function Home() {
             VHH candidate campaign with explicit artifacts, metrics, and limitations.
           </p>
           <div className="hero-actions">
-            <Link className="button primary" href="/campaign/lpar1-demo">
+            <Link className="button primary" href={{ pathname: "/viewer" }}>
               Open LPAR1 demo <ArrowRight size={18} aria-hidden="true" />
             </Link>
-            <a className="button secondary" href="/api/campaign">
-              View live API
-            </a>
           </div>
         </div>
 
@@ -97,7 +94,7 @@ export default function Home() {
       <section className="content-band" id="workflow">
         <div className="section-heading">
           <h2>Live workflow</h2>
-          <p>The website now connects to the same Python submitters that stage manifests, upload inputs, and submit Google Batch GPU jobs.</p>
+          <p>The live path now follows one GPU VM from launch through drug design and model-based evaluation.</p>
         </div>
         <div className="stage-list">
           {pipelineStages.map((stage, index) => (

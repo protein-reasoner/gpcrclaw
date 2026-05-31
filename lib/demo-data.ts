@@ -10,23 +10,18 @@ export const demoCampaign = {
 
 export const pipelineStages = [
   {
-    name: "Target and template",
-    description: "Resolve the selected GPCR, UniProt record, structure template, and ECL2 design scope.",
-    state: "ready"
+    name: "Boot GPU VM",
+    description: "Start the A100 worker VM, attach the LPAR1 campaign inputs, and keep the run record tied to the cloud job.",
+    state: "running"
   },
   {
-    name: "Hotspot set",
-    description: "Keep the epitope definition inspectable through configured residues and counter-screen targets.",
-    state: "ready"
+    name: "Run drug design model",
+    description: "Execute RFantibody/RFdiffusion on the GPU VM to generate ECL2-focused VHH candidates and output artifacts.",
+    state: "running"
   },
   {
-    name: "Worker batch",
-    description: "Submit RFantibody and ESMFold2 work units through the manifest, GCS artifact, and Google Batch contract.",
-    state: "cloud"
-  },
-  {
-    name: "Ranking report",
-    description: "Combine interface, specificity, and developability metrics into a limitations-aware report.",
+    name: "Run evaluation model",
+    description: "Filter and gate generated candidates with Boltz-2 ipTM, pTM, complex pLDDT, and structure artifacts before ranking returned results.",
     state: "ready"
   }
 ] as const;
