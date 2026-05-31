@@ -1,0 +1,36 @@
+{
+  "batch_id": "batch_1",
+  "campaign_id": "LPAR1_IMMUNEBUILDER_QC",
+  "candidate": {
+    "candidate_id": "LPAR1_NB_IMMUNEBUILDER_001",
+    "cdr1": "GFTFSSYA",
+    "cdr2": "AISGSGGSTYYADSVKG",
+    "cdr3": "CARDRSTYW",
+    "sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAISWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNAKNTLYLQMNSLRAEDTAVYYCCARDRSTYWWGQGTQVTVSS"
+  },
+  "evidence_mode": "live",
+  "job_id": "immunebuilder_lpar1_nb_001",
+  "output_uri": "local://.gpcrclaw/immunebuilder-local/output",
+  "resources": {
+    "gpu_count": 1,
+    "gpu_type": "A100"
+  },
+  "target": {
+    "epitope": "ECL2",
+    "target_id": "LPAR1"
+  },
+  "worker_name": "immunebuilder",
+  "worker_options": {
+    "dry_run": true,
+    "execution_mode": "api",
+    "model_ids": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "n_threads": -1,
+    "numbering_scheme": "imgt"
+  },
+  "worker_version": "0.1.0"
+}

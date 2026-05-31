@@ -1,0 +1,33 @@
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CONDA_DIR=/opt/conda
+ENV PATH=/opt/conda/bin:$PATH
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        bzip2 \
+        ca-certificates \
+        curl \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -o /tmp/miniforge.sh \
+    && bash /tmp/miniforge.sh -b -p "$CONDA_DIR" \
+    && rm /tmp/miniforge.sh \
+    && conda config --system --set channel_priority strict \
+    && conda install -y -c conda-forge -c bioconda python=3.11 openmm pdbfixer anarci \
+    && conda clean -afy
+
+WORKDIR /app
+COPY pyproject.toml /app/
+COPY src /app/src
+
+ENV PYTHONPATH=/app/src
+ENV IMMUNEBUILDER_WEIGHTS_DIR=/models/immunebuilder
+
+RUN python -m pip install --no-cache-dir --upgrade pip \
+    && python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu124 torch \
+    && python -m pip install --no-cache-dir ImmuneBuilder==1.2
+
+CMD ["python", "-m", "gpcrclaw.workers.immunebuilder", "--manifest", "/mnt/disks/input/manifest.json"]

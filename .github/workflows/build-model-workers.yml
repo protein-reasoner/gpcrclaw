@@ -1,0 +1,97 @@
+name: Build model worker images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-model-workers.yml"
+      - "Dockerfile*"
+      - "pyproject.toml"
+      - "src/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: build-model-workers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  model-worker:
+    name: Build and push ${{ matrix.image_name }}
+    runs-on: ubuntu-latest
+    environment: model-workers
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image_name: fake-worker
+            dockerfile: Dockerfile.fake-worker
+          - image_name: boltz2-worker
+            dockerfile: Dockerfile.boltz2
+          - image_name: chai1-worker
+            dockerfile: Dockerfile.chai1
+          - image_name: immunebuilder-worker
+            dockerfile: Dockerfile.immunebuilder
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_SERVICE_ACCOUNT_EMAIL: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+      IMAGE_NAME: ${{ matrix.image_name }}
+      WORKER_DOCKERFILE: ${{ matrix.dockerfile }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate configuration
+        run: |
+          missing=0
+          for name in GCP_PROJECT_ID GCP_REGION GAR_REPOSITORY GCP_WORKLOAD_IDENTITY_PROVIDER GCP_SERVICE_ACCOUNT_EMAIL WORKER_DOCKERFILE IMAGE_NAME; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not configured"
+              missing=1
+            fi
+          done
+          if [ ! -f "$WORKER_DOCKERFILE" ]; then
+            echo "::error::Dockerfile not found: $WORKER_DOCKERFILE"
+            missing=1
+          fi
+          exit "$missing"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: ">= 416.0.0"
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ env.WORKER_DOCKERFILE }}
+          push: true
+          tags: |
+            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=${{ env.IMAGE_NAME }}

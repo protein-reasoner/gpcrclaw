@@ -36,11 +36,23 @@ class GoogleBatchTest(unittest.TestCase):
         self.assertTrue(a100["allocationPolicy"]["instances"][0]["installGpuDrivers"])
         self.assertEqual(a100["allocationPolicy"]["serviceAccount"]["email"], config.service_account_email)
         self.assertEqual(a100["taskGroups"][0]["taskSpec"]["volumes"][0]["mountPath"], "/mnt/disks/input")
+        self.assertEqual(a100["taskGroups"][0]["taskSpec"]["runnables"][0]["container"]["commands"][0], "python3")
         self.assertEqual(l4["allocationPolicy"]["instances"][0]["policy"]["machineType"], "g2-standard-8")
 
     def test_preemptible_requires_restartable(self) -> None:
         with self.assertRaises(ValueError):
             build_batch_job_payload(GpcrClawConfig(), batch_request(preemptible=True, restartable=False))
+
+    def test_a100_multi_gpu_machine_shapes_are_explicit(self) -> None:
+        config = GpcrClawConfig()
+        request = batch_request()
+        request.gpu_count = 4
+        payload = build_batch_job_payload(config, request)
+        self.assertEqual(payload["allocationPolicy"]["instances"][0]["policy"]["machineType"], "a2-highgpu-4g")
+
+        request.gpu_count = 3
+        with self.assertRaises(ValueError):
+            build_batch_job_payload(config, request)
 
     def test_concurrency_limits(self) -> None:
         config = GpcrClawConfig(concurrency=ConcurrencyLimits(standard_a100=1, preemptible_a100=2, l4=1))
@@ -55,7 +67,7 @@ class GoogleBatchTest(unittest.TestCase):
 
     def test_worker_module_mapping_supports_boltz2_placeholder(self) -> None:
         self.assertEqual(worker_module("fake_worker"), "gpcrclaw.workers.fake_worker")
-        self.assertEqual(worker_module("boltz2"), "gpcrclaw.workers.boltz2")
+        self.assertEqual(worker_module("boltz2"), "gpcrclaw.workers.boltz2_live")
 
     def test_readiness_checks_are_injectable(self) -> None:
         def runner(args):

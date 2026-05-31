@@ -1,0 +1,31 @@
+{
+  "batch_id": "batch_boltz2_example",
+  "campaign_id": "LPAR1_BOLTZ2_EXAMPLE",
+  "candidate": {
+    "candidate_id": "LPAR1_NB_EXAMPLE",
+    "cdr3": "CARDRSTYW",
+    "sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAISWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNAKNTLYLQMNSLRAEDTAVYYCARDRSTYWWGQGTQVTVSS"
+  },
+  "evidence_mode": "live",
+  "job_id": "job_boltz2_example",
+  "output_uri": "local://.gpcrclaw/examples/boltz2/output",
+  "resources": {
+    "gpu_count": 1,
+    "gpu_type": "A100"
+  },
+  "target": {
+    "epitope": "ECL2",
+    "sequence": "MPNSTTVMEGNVTVVLGQPAGVLLVGLALGLSLLVLVLWRRRGWCRCRRPSGSRVPSAAGCPRHRRRWAGLPLVFLVVAVYVVGWVGNALYLLLVLQGQGHTRLGNLYWLLLALAGLPLSLLLAVCRHLCGPGGQGRLRLGPGQDGPRGRLQGQGQGQGL",
+    "target_id": "LPAR1"
+  },
+  "worker_name": "boltz2",
+  "worker_options": {
+    "candidate_chain_id": "B",
+    "dry_run": true,
+    "output_format": "pdb",
+    "target_chain_id": "A",
+    "use_msa_server": false,
+    "use_potentials": true
+  },
+  "worker_version": "0.1.0"
+}

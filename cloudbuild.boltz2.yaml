@@ -1,0 +1,13 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    timeout: 3600s
+    args:
+      - build
+      - -f
+      - Dockerfile.boltz2
+      - -t
+      - us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:latest
+      - .
+images:
+  - us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:latest
+timeout: 3600s

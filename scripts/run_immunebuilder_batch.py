@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -18,64 +19,57 @@ from gpcrclaw.backends.google_batch import build_batch_job_payload
 from gpcrclaw.config import GpcrClawConfig
 from gpcrclaw.env import load_env_file
 from gpcrclaw.ids import slugify, utc_now
-from gpcrclaw.models import TargetContext
+from gpcrclaw.worker_contract import validate_manifest
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Submit and optionally wait for a Google Batch fake-worker smoke job.")
-    parser.add_argument("--gpu-type", choices=["L4", "A100"], required=True)
+    parser = argparse.ArgumentParser(description="Submit an ImmuneBuilder NanoBodyBuilder2 worker job to Google Batch.")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "examples/immunebuilder/lpar1_nanobody_qc_manifest.json")
     parser.add_argument("--job-name")
-    parser.add_argument("--preemptible", action="store_true")
+    parser.add_argument("--live", action="store_true", help="Execute NanoBodyBuilder2 instead of the worker dry-run path.")
     parser.add_argument("--no-wait", action="store_true")
-    parser.add_argument("--poll-seconds", type=int, default=15)
-    parser.add_argument("--timeout-seconds", type=int, default=1800)
+    parser.add_argument("--poll-seconds", type=int, default=30)
+    parser.add_argument("--timeout-seconds", type=int, default=3600)
     args = parser.parse_args()
 
     load_env_file()
     config = GpcrClawConfig.from_env()
+    manifest = json.loads(args.manifest.read_text())
+    validate_manifest(manifest)
+    options = dict(manifest.get("worker_options") or {})
+    options["dry_run"] = not args.live
+    manifest["worker_options"] = options
+
     suffix = utc_now().replace(":", "").replace("-", "").lower().replace("z", "")
-    job_name = args.job_name or f"gpcrclaw-{args.gpu_type.lower()}-smoke-{suffix}"
-    job_name = slugify(job_name)[:63]
-    campaign_id = job_name.replace("-", "_").upper()
-    batch_id = "batch_smoke"
-    job_id = "job_smoke"
+    job_name = slugify(args.job_name or f"gpcrclaw-immunebuilder-a100-{suffix}")[:63]
+    campaign_id = manifest["campaign_id"] = job_name.replace("-", "_").upper()
+    batch_id = manifest["batch_id"]
+    job_id = manifest["job_id"]
     base_uri = f"{config.artifact_gs_root()}/{campaign_id}/batches/{batch_id}/jobs/{job_id}"
     input_uri = f"{base_uri}/input"
     output_uri = f"{base_uri}/output"
+    manifest["output_uri"] = output_uri
+    manifest["resources"] = {"gpu_type": "A100", "gpu_count": 1}
 
-    manifest = {
-        "campaign_id": campaign_id,
-        "batch_id": batch_id,
-        "job_id": job_id,
-        "worker_name": "fake_worker",
-        "worker_version": "0.1.0",
-        "evidence_mode": "mock",
-        "target": TargetContext.lpar1().__dict__,
-        "candidate": {"candidate_id": "LPAR1_NB_CLOUD_SMOKE"},
-        "output_uri": output_uri,
-        "resources": {"gpu_type": args.gpu_type, "gpu_count": 1},
-        "seed": 101,
-        "worker_options": {"failure_mode": "success"},
-    }
     request = GpuJobRequest(
         campaign_id=campaign_id,
         batch_id=batch_id,
         job_id=job_id,
-        worker_name="fake_worker",
-        container_image=config.container_image,
-        gpu_type=args.gpu_type,
+        worker_name="immunebuilder",
+        container_image=config.immunebuilder_container_image,
+        gpu_type="A100",
         gpu_count=1,
         input_uri=input_uri,
         output_uri=output_uri,
-        timeout_minutes=config.timeout_minutes,
+        timeout_minutes=max(config.timeout_minutes, 60),
         max_retries=config.max_retries,
-        candidate_id="LPAR1_NB_CLOUD_SMOKE",
-        labels={"worker": "fake_worker", "gpu": args.gpu_type.lower()},
+        candidate_id=_candidate_id(manifest),
+        labels={"worker": "immunebuilder", "gpu": "a100"},
         restartable=True,
-        preemptible=args.preemptible,
+        preemptible=False,
     )
 
-    work_dir = ROOT / ".gpcrclaw" / "cloud-smoke" / job_name
+    work_dir = ROOT / ".gpcrclaw" / "immunebuilder-batch" / job_name
     work_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = work_dir / "manifest.json"
     config_path = work_dir / "batch-job.json"
@@ -85,12 +79,27 @@ def main() -> int:
     run(["gcloud", "storage", "cp", str(manifest_path), f"{input_uri}/manifest.json"])
     run(["gcloud", "batch", "jobs", "submit", job_name, "--location", config.region, "--config", str(config_path)])
 
-    result = {"job_name": job_name, "campaign_id": campaign_id, "input_uri": input_uri, "output_uri": output_uri, "config_path": str(config_path)}
+    result: dict[str, Any] = {
+        "job_name": job_name,
+        "campaign_id": campaign_id,
+        "input_uri": input_uri,
+        "output_uri": output_uri,
+        "config_path": str(config_path),
+        "live": args.live,
+    }
     if not args.no_wait:
         result["final_state"] = wait_for_job(job_name, config.region, args.poll_seconds, args.timeout_seconds)
         result["outputs"] = list_outputs(output_uri)
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
+
+
+def _candidate_id(manifest: dict[str, Any]) -> str | None:
+    candidate = manifest.get("candidate")
+    if isinstance(candidate, dict):
+        value = candidate.get("candidate_id")
+        return str(value) if value else None
+    return None
 
 
 def run(args: list[str]) -> subprocess.CompletedProcess[str]:

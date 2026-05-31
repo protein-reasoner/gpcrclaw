@@ -7,6 +7,7 @@ from pathlib import Path
 from .backends.base import GpuJobRequest
 from .backends.google_batch import build_batch_job_payload, check_gcloud_readiness
 from .config import GpcrClawConfig
+from .env import load_env_file
 from .smoke import run_local_smoke
 from .workers.boltz2_placeholder import run_boltz2_placeholder
 from .workers.fake_worker import run_fake_worker
@@ -45,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     gcp_sub.add_parser("readiness")
 
     args = parser.parse_args(argv)
+    load_env_file()
     config = GpcrClawConfig.from_env()
 
     if args.command == "smoke":

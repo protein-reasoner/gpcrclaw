@@ -1,0 +1,35 @@
+{
+  "batch_id": "batch_chai1_verifier_example",
+  "campaign_id": "LPAR1_CHAI1_VERIFIER_EXAMPLE",
+  "candidate": {
+    "candidate_id": "LPAR1_NB_EXAMPLE",
+    "cdr3": "CARDRSTYW",
+    "sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAISWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNAKNTLYLQMNSLRAEDTAVYYCARDRSTYWWGQGTQVTVSS"
+  },
+  "evidence_mode": "live",
+  "job_id": "job_chai1_verifier_example",
+  "output_uri": "local://.gpcrclaw/examples/chai1/output",
+  "resources": {
+    "gpu_count": 1,
+    "gpu_type": "A100"
+  },
+  "target": {
+    "epitope": "ECL2",
+    "sequence": "MPNSTTVMEGNVTVVLGQPAGVLLVGLALGLSLLVLVLWRRRGWCRCRRPSGSRVPSAAGCPRHRRRWAGLPLVFLVVAVYVVGWVGNALYLLLVLQGQGHTRLGNLYWLLLALAGLPLSLLLAVCRHLCGPGGQGRLRLGPGQDGPRGRLQGQGQGQGL",
+    "target_id": "LPAR1"
+  },
+  "worker_name": "chai1",
+  "worker_options": {
+    "candidate_chain_id": "B",
+    "device": "cuda:0",
+    "dry_run": true,
+    "num_diffn_samples": 2,
+    "num_diffn_timesteps": 50,
+    "num_trunk_recycles": 1,
+    "seed": 42,
+    "target_chain_id": "A",
+    "use_msa_server": false,
+    "use_templates_server": false
+  },
+  "worker_version": "0.1.0"
+}

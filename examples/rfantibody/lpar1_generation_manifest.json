@@ -1,0 +1,45 @@
+{
+  "batch_id": "batch_rfantibody_generation_example",
+  "campaign_id": "LPAR1_RFANTIBODY_EXAMPLE",
+  "candidate": {
+    "candidate_id": "generation_batch"
+  },
+  "evidence_mode": "live",
+  "job_id": "job_rfantibody_generation_example",
+  "output_uri": "local://.gpcrclaw/examples/rfantibody/output",
+  "resources": {
+    "gpu_count": 1,
+    "gpu_type": "A100"
+  },
+  "seed": 11,
+  "target": {
+    "epitope": "ECL2",
+    "hotspot_residues": [
+      "R190",
+      "Y194",
+      "D198",
+      "K201",
+      "F205"
+    ],
+    "sequence": "MPNSTTVMEGNVTVVLGQPAGVLLVGLALGLSLLVLVLWRRRGWCRCRRPSGSRVPSAAGCPRHRRRWAGLPLVFLVVAVYVVGWVGNALYLLLVLQGQGHTRLGNLYWLLLALAGLPLSLLLAVCRHLCGPGGQGRLRLGPGQDGPRGRLQGQGQGQGL",
+    "target_id": "LPAR1"
+  },
+  "worker_name": "rfantibody",
+  "worker_options": {
+    "rfantibody": {
+      "boltz2_options": {
+        "candidate_chain_id": "B",
+        "target_chain_id": "A",
+        "use_msa_server": false
+      },
+      "candidate_prefix": "LPAR1_RFNB",
+      "cdr3_length_range": [
+        10,
+        18
+      ],
+      "dry_run": true,
+      "num_candidates": 4
+    }
+  },
+  "worker_version": "0.1.0"
+}

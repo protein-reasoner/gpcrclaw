@@ -31,6 +31,10 @@ class GpcrClawConfig:
     bucket: str = "gpcrclaw-artifacts"
     artifact_prefix: str = "campaigns/alankrit"
     container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/fake-worker:latest"
+    boltz2_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:latest"
+    chai1_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/chai1-worker:latest"
+    immunebuilder_container_image: str = "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/immunebuilder-worker:latest"
+    model_artifact_root: str = "gs://gpcrclaw-artifacts/models"
     service_account_email: str = "gpcrclaw-batch-worker@build-wgemini26sfo-2005.iam.gserviceaccount.com"
     accelerator_type: str = "A100"
     accelerator_count: int = 1
@@ -53,6 +57,19 @@ class GpcrClawConfig:
                 "GPCRCLAW_CONTAINER_IMAGE",
                 "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/fake-worker:latest",
             ),
+            boltz2_container_image=os.getenv(
+                "GPCRCLAW_BOLTZ2_CONTAINER_IMAGE",
+                "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/boltz2-worker:latest",
+            ),
+            chai1_container_image=os.getenv(
+                "GPCRCLAW_CHAI1_CONTAINER_IMAGE",
+                "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/chai1-worker:latest",
+            ),
+            immunebuilder_container_image=os.getenv(
+                "GPCRCLAW_IMMUNEBUILDER_CONTAINER_IMAGE",
+                "us-central1-docker.pkg.dev/build-wgemini26sfo-2005/gpcrclaw/immunebuilder-worker:latest",
+            ),
+            model_artifact_root=os.getenv("GPCRCLAW_MODEL_ARTIFACT_ROOT", "gs://gpcrclaw-artifacts/models"),
             service_account_email=os.getenv(
                 "GPCRCLAW_SERVICE_ACCOUNT_EMAIL",
                 "gpcrclaw-batch-worker@build-wgemini26sfo-2005.iam.gserviceaccount.com",

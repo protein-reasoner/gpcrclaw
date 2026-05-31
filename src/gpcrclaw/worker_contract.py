@@ -43,12 +43,60 @@ BOLTZ2_METRICS_SCHEMA = {
     "artifact_kinds": ["complex_structure", "raw_metrics", "worker_logs"],
 }
 
+THERMOMPNN_METRICS_SCHEMA = {
+    "tool": "thermompnn",
+    "required_metrics": [
+        "min_ddg_pred",
+        "mean_ddg_pred",
+        "max_ddg_pred",
+        "stabilizing_fraction",
+        "destabilizing_fraction",
+    ],
+    "artifact_kinds": ["stability_scan", "raw_metrics", "thermompnn_input", "worker_logs"],
+}
+
+RFANTIBODY_GENERATION_SCHEMA = {
+    "tool": "rfantibody",
+    "required_metrics": ["generation_rank", "cdr3_length", "sequence_length"],
+    "artifact_kinds": ["generated_candidates", "candidate_fasta", "boltz2_manifest", "worker_logs"],
+}
+
+IMMUNEBUILDER_METRICS_SCHEMA = {
+    "tool": "immunebuilder",
+    "required_metrics": [
+        "mean_residue_error",
+        "max_residue_error",
+        "cdr1_mean_error",
+        "cdr2_mean_error",
+        "cdr3_mean_error",
+        "cdr_loop_quality_score",
+    ],
+    "artifact_kinds": [
+        "nanobody_structure",
+        "residue_error_estimates",
+        "cdr_loop_quality",
+        "immunebuilder_input",
+        "candidate_fasta",
+        "worker_logs",
+    ],
+}
+
+CHAI1_METRICS_SCHEMA = {
+    "tool": "chai1",
+    "required_metrics": ["aggregate_score", "iptm", "ptm", "complex_plddt"],
+    "artifact_kinds": ["complex_structure", "raw_metrics", "chai_input", "worker_logs"],
+}
+
 MODEL_METRIC_SCHEMAS = {
     "fake_worker": {
         "required_metrics": ["interface_score", "specificity_margin", "developability_score"],
         "artifact_kinds": ["complex_structure", "raw_metrics", "worker_logs"],
     },
     "boltz2": BOLTZ2_METRICS_SCHEMA,
+    "thermompnn": THERMOMPNN_METRICS_SCHEMA,
+    "rfantibody": RFANTIBODY_GENERATION_SCHEMA,
+    "immunebuilder": IMMUNEBUILDER_METRICS_SCHEMA,
+    "chai1": CHAI1_METRICS_SCHEMA,
 }
 
 

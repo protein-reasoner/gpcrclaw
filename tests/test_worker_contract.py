@@ -65,6 +65,31 @@ class WorkerContractTest(unittest.TestCase):
     def test_boltz2_metric_schema_is_registered(self) -> None:
         self.assertEqual(MODEL_METRIC_SCHEMAS["boltz2"]["required_metrics"], ["iptm", "ptm", "complex_plddt"])
 
+    def test_chai1_metric_schema_is_registered(self) -> None:
+        self.assertEqual(
+            MODEL_METRIC_SCHEMAS["chai1"]["required_metrics"],
+            ["aggregate_score", "iptm", "ptm", "complex_plddt"],
+        )
+
+    def test_thermompnn_metric_schema_is_registered(self) -> None:
+        self.assertEqual(
+            MODEL_METRIC_SCHEMAS["thermompnn"]["required_metrics"],
+            ["min_ddg_pred", "mean_ddg_pred", "max_ddg_pred", "stabilizing_fraction", "destabilizing_fraction"],
+        )
+
+    def test_immunebuilder_metric_schema_is_registered(self) -> None:
+        self.assertEqual(
+            MODEL_METRIC_SCHEMAS["immunebuilder"]["required_metrics"],
+            [
+                "mean_residue_error",
+                "max_residue_error",
+                "cdr1_mean_error",
+                "cdr2_mean_error",
+                "cdr3_mean_error",
+                "cdr_loop_quality_score",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

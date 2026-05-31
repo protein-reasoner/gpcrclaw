@@ -1,0 +1,39 @@
+{
+  "batch_id": "batch_thermompnn_example",
+  "campaign_id": "LPAR1_THERMOMPNN_EXAMPLE",
+  "candidate": {
+    "candidate_id": "LPAR1_NB_EXAMPLE",
+    "cdr3": "CARDRSTYW",
+    "chain_id": "H",
+    "mutations": [
+      "A10V",
+      {
+        "mutation": "D",
+        "position": 11,
+        "wildtype": "G"
+      }
+    ],
+    "sequence": "EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAISWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNAKNTLYLQMNSLRAEDTAVYYCARDRSTYWWGQGTQVTVSS",
+    "structure_path": "/mnt/disks/input/candidate.pdb"
+  },
+  "evidence_mode": "live",
+  "job_id": "job_thermompnn_example",
+  "output_uri": "local://.gpcrclaw/examples/thermompnn/output",
+  "resources": {
+    "gpu_count": 1,
+    "gpu_type": "A100"
+  },
+  "target": {
+    "epitope": "ECL2",
+    "target_id": "LPAR1"
+  },
+  "worker_name": "thermompnn",
+  "worker_options": {
+    "destabilizing_threshold": 1.0,
+    "dry_run": true,
+    "model_path": "/opt/ThermoMPNN/models/thermoMPNN_default.pt",
+    "script_path": "/opt/ThermoMPNN/analysis/custom_inference.py",
+    "stabilizing_threshold": -0.5
+  },
+  "worker_version": "0.1.0"
+}

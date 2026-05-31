@@ -51,7 +51,15 @@ def check_gcloud_readiness(config: GpcrClawConfig, runner: RunCommand = run_comm
 def accelerator_policy(gpu_type: str, gpu_count: int, *, preemptible: bool) -> dict:
     normalized = gpu_type.upper()
     if normalized == "A100":
-        machine_type = "a2-highgpu-1g" if gpu_count == 1 else "a2-highgpu-2g"
+        machine_types = {
+            1: "a2-highgpu-1g",
+            2: "a2-highgpu-2g",
+            4: "a2-highgpu-4g",
+            8: "a2-highgpu-8g",
+        }
+        if gpu_count not in machine_types:
+            raise ValueError("A100 GPU count must be one of 1, 2, 4, or 8")
+        machine_type = machine_types[gpu_count]
         accelerator = "nvidia-tesla-a100"
     elif normalized == "L4":
         machine_type = "g2-standard-8"
@@ -80,7 +88,7 @@ def build_batch_job_payload(config: GpcrClawConfig, request: GpuJobRequest) -> d
                         {
                             "container": {
                                 "imageUri": request.container_image,
-                                "commands": ["python", "-m", worker_module(request.worker_name), "--manifest", f"{BATCH_INPUT_MOUNT}/manifest.json"],
+                                "commands": ["python3", "-m", worker_module(request.worker_name), "--manifest", f"{BATCH_INPUT_MOUNT}/manifest.json"],
                             }
                         }
                     ],
@@ -115,7 +123,7 @@ def build_batch_job_payload(config: GpcrClawConfig, request: GpuJobRequest) -> d
 def worker_module(worker_name: str) -> str:
     modules = {
         "fake_worker": "gpcrclaw.workers.fake_worker",
-        "boltz2": "gpcrclaw.workers.boltz2",
+        "boltz2": "gpcrclaw.workers.boltz2_live",
     }
     return modules.get(worker_name, f"gpcrclaw.workers.{worker_name}")
 
