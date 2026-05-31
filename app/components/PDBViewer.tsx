@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 
 interface PDBViewerProps {
-  pdbFile: string; // relative path under /public, e.g., 'structures/7S8L.pdb'
+  pdbFile: string; // relative path under /public/structures, e.g., '7S8L.pdb' or '7TD0.pdb'
 }
 
 const PDBViewer: React.FC<PDBViewerProps> = ({ pdbFile }) => {
@@ -16,10 +16,15 @@ const PDBViewer: React.FC<PDBViewerProps> = ({ pdbFile }) => {
     // Dynamically import 3Dmol on the client side
     import('3dmol').then((module) => {
       const $3Dmol = module.default || module;
-      viewer = $3Dmol.createViewer(viewerRef.current, { backgroundColor: '0x000000' });
+      // Set to match card background color
+      viewer = $3Dmol.createViewer(viewerRef.current, { backgroundColor: '#0f172a' });
+      
       // Load the PDB file from the public structures folder
       fetch(`/structures/${pdbFile}`)
-        .then((res) => res.text())
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.text();
+        })
         .then((pdbData) => {
           viewer.addModel(pdbData, 'pdb');
           viewer.setStyle({}, { cartoon: { color: 'spectrum' } });
@@ -37,7 +42,14 @@ const PDBViewer: React.FC<PDBViewerProps> = ({ pdbFile }) => {
   return (
     <div
       ref={viewerRef}
-      style={{ width: '100%', height: '600px', border: '1px solid #444' }}
+      style={{
+        width: '100%',
+        height: '100%',
+        minHeight: '550px',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: '1px solid #334155'
+      }}
     />
   );
 };

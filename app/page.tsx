@@ -55,6 +55,7 @@ export default function Home() {
         <nav className="nav-links" aria-label="Primary">
           <a href="#workflow">Workflow</a>
           <a href="#stack">Stack</a>
+          <Link href="/viewer">Structure Viewer</Link>
           <Link href="/campaign/lpar1-demo">Demo Campaign</Link>
         </nav>
       </header>
@@ -73,7 +74,7 @@ export default function Home() {
             <li><CheckCircle2 size={17} aria-hidden="true" /> Evidence-rich candidate dossiers</li>
           </ul>
           <div className="hero-actions">
-            <Link className="button primary" href={{ pathname: "/viewer" }}>
+            <Link className="button primary" href="/viewer?protein=LPAR1">
               Open LPAR1 demo <ArrowRight size={18} aria-hidden="true" />
             </Link>
           </div>
