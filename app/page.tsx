@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { Activity, ArrowRight, BookOpen, CheckCircle2, Cpu, Database, FileCheck, Layers3, Microscope, ShieldCheck, Target } from "lucide-react";
+import { Activity, ArrowRight, BookOpen, CheckCircle2, CirclePlay, Cpu, Database, ExternalLink, FileCheck, Microscope, Target } from "lucide-react";
 import { demoCampaign, pipelineStages } from "@/lib/demo-data";
 import { CloudLaunchPanel } from "@/app/components/CloudLaunchPanel";
+
+const demoVideoUrl = "https://youtu.be/wtPxDkKRDCQ";
+const demoVideoEmbedUrl = "https://www.youtube.com/embed/wtPxDkKRDCQ";
 
 const scaleStats = [
   {
@@ -55,7 +58,8 @@ export default function Home() {
         <nav className="nav-links" aria-label="Primary">
           <a href="#workflow">Workflow</a>
           <a href="#stack">Stack</a>
-          <Link href="/viewer">Structure Viewer</Link>
+          <Link href={{ pathname: "/viewer" }}>Structure Viewer</Link>
+          <a href="#demo-video">Video demo</a>
           <Link href="/campaign/lpar1-demo">Demo Campaign</Link>
         </nav>
       </header>
@@ -74,9 +78,12 @@ export default function Home() {
             <li><CheckCircle2 size={17} aria-hidden="true" /> Evidence-rich candidate dossiers</li>
           </ul>
           <div className="hero-actions">
-            <Link className="button primary" href="/viewer?protein=LPAR1">
+            <Link className="button primary" href={{ pathname: "/viewer", query: { protein: "LPAR1" } }}>
               Open LPAR1 demo <ArrowRight size={18} aria-hidden="true" />
             </Link>
+            <a className="button secondary" href={demoVideoUrl} target="_blank" rel="noreferrer">
+              Watch demo <CirclePlay size={18} aria-hidden="true" />
+            </a>
           </div>
         </div>
 
@@ -140,6 +147,29 @@ export default function Home() {
             </article>
           );
         })}
+      </section>
+
+      <section className="content-band demo-video-band" id="demo-video" aria-labelledby="demo-video-heading">
+        <div className="section-heading">
+          <span className="label">Recorded demo</span>
+          <h2 id="demo-video-heading">Watch the GPCRclaw campaign walkthrough</h2>
+          <p>
+            The demo shows the current campaign flow from receptor context through GPU model execution
+            and ranked research-support evidence.
+          </p>
+        </div>
+        <div className="demo-video-shell">
+          <iframe
+            src={demoVideoEmbedUrl}
+            title="GPCRclaw demo video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+        <a className="demo-video-link" href={demoVideoUrl} target="_blank" rel="noreferrer">
+          Open on YouTube <ExternalLink size={16} aria-hidden="true" />
+        </a>
       </section>
 
       <section className="content-band">

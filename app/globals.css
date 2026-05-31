@@ -543,6 +543,47 @@ p {
   max-width: 720px;
 }
 
+.demo-video-band {
+  padding-top: 46px;
+}
+
+.demo-video-shell {
+  background: var(--surface-strong);
+  border: 1px solid rgba(18, 26, 23, 0.14);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.demo-video-shell::before {
+  content: "";
+  display: block;
+  padding-top: 56.25%;
+}
+
+.demo-video-shell iframe {
+  border: 0;
+  height: 100%;
+  inset: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.demo-video-link {
+  align-items: center;
+  color: var(--accent-strong);
+  display: inline-flex;
+  font-size: 0.92rem;
+  font-weight: 800;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.demo-video-link:hover {
+  color: var(--text);
+}
+
 .section-heading h2,
 .report-note h2 {
   font-size: clamp(2rem, 4vw, 3.15rem);
