@@ -66,9 +66,9 @@ a {
 
 .brand {
   gap: 10px;
-  font-size: 1.35rem;
+  font-size: 1.75rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .brand-mark {
@@ -77,10 +77,10 @@ a {
   border-radius: 7px;
   color: #f6f7f4;
   display: inline-flex;
-  height: 36px;
+  height: 40px;
   justify-content: center;
-  width: 36px;
-  font-size: 1.15rem;
+  width: 40px;
+  font-size: 1.3rem;
 }
 
 .nav-links {
@@ -120,9 +120,9 @@ p {
 }
 
 .hero-copy h1 {
-  font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
   letter-spacing: -0.03em;
-  line-height: 1.05;
+  line-height: 1.25;
   margin-bottom: 28px;
   max-width: 900px;
 }
@@ -1222,7 +1222,7 @@ p {
   }
 
   .hero-copy h1 {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
   }
 
   .hero-section {
