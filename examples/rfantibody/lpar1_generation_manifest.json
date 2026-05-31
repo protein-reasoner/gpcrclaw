@@ -39,6 +39,7 @@
         18
       ],
       "dry_run": true,
+      "framework_pdb": "/opt/RFantibody/scripts/examples/example_inputs/h-NbBCII10.pdb",
       "num_candidates": 4
     }
   },
