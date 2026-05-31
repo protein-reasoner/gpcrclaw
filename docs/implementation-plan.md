@@ -258,6 +258,27 @@ Operational lessons to encode in the model:
 - Campaigns can be partial and still useful.
 - Store job IDs, batch IDs, output artifact IDs, and retry notes.
 - Structure scoring and report generation should work even when only top candidates have expensive metrics.
+
+## GPU Agent Runtime Update
+
+The first implementation now uses a Python package for the campaign agent runtime before a frontend or Cloud Run API is added.
+
+Implemented first:
+
+- Local campaign state under `.gpcrclaw/state`.
+- Local artifacts under `.gpcrclaw/artifacts`.
+- File-based worker contract for `manifest.json`, `metrics.json`, `artifacts.json`, and `logs.txt`.
+- `fake_worker` for local smoke runs and future Batch smoke jobs.
+- Google Batch dry-run payload generation for `us-central1` L4 and A100 jobs.
+- Boltz-2 placeholder that validates the same manifest contract and returns a not-yet-configured worker error.
+
+Next after the fake-worker cloud smoke passes:
+
+1. Publish the fake-worker image to Artifact Registry.
+2. Run one L4 Google Batch smoke job and verify Cloud Storage outputs.
+3. Run one standard A100 Google Batch smoke job and verify Cloud Storage outputs.
+4. Run a bounded parallel fake-worker A100 batch below the configured concurrency limit.
+5. Replace only the worker internals with a Boltz-2 scoring container while keeping campaign orchestration and artifact provenance unchanged.
 - Tool-derived scores must be labeled with tool name and provenance.
 
 ## Workstream Bucket Reference
