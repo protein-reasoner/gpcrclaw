@@ -128,7 +128,7 @@ function buildStages(elapsedMs: number): DemoRunStage[] {
       id: "validation",
       label: "Validation",
       status: elapsedMs < 2_800 ? "pending" : elapsedMs < 4_400 ? "warning" : "done",
-      detail: "Filter with Boltz-2 ipTM, pTM, complex pLDDT, and required artifacts"
+      detail: "Filter with Boltz-2 ipSAE, epitope contacts, ipTM, pTM, VHH sequence gates, and required artifacts"
     },
     {
       id: "retry",

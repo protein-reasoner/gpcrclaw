@@ -105,7 +105,7 @@ const launchOptions: Array<{ workers: ModelWorker[]; label: string; detail: stri
   {
     workers: ["rfantibody", "boltz2"],
     label: "Start primary pipeline",
-    detail: "RFantibody design plus Boltz-2 candidate filtering"
+    detail: "RFantibody VHH design plus Boltz-2 ipSAE/contact filtering"
   },
   {
     workers: ["rfantibody"],
@@ -115,7 +115,7 @@ const launchOptions: Array<{ workers: ModelWorker[]; label: string; detail: stri
   {
     workers: ["boltz2"],
     label: "Launch Boltz-2",
-    detail: "One real A100 Boltz-2 scoring job"
+    detail: "One real A100 Boltz-2 ipSAE/contact scoring job"
   }
 ];
 
@@ -430,7 +430,7 @@ function CloudRuntimeStack({
           title="Evaluation model"
           worker={evaluationJob?.worker || "Boltz-2"}
           state={evaluationState}
-          detail={evaluationJob?.jobName || "scoring ipTM, pTM, complex pLDDT, and filtering candidates"}
+          detail={evaluationJob?.jobName || "scoring ipSAE, epitope contacts, ipTM, pTM, and VHH developability"}
         />
       </div>
     </div>

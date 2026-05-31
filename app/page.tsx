@@ -1,23 +1,46 @@
 import Link from "next/link";
-import { Activity, ArrowRight, Layers3, ShieldCheck } from "lucide-react";
+import { Activity, ArrowRight, BookOpen, CheckCircle2, Cpu, Database, FileCheck, Layers3, Microscope, ShieldCheck, Target } from "lucide-react";
 import { demoCampaign, pipelineStages } from "@/lib/demo-data";
 import { CloudLaunchPanel } from "@/app/components/CloudLaunchPanel";
 
-const proofPoints = [
+const scaleStats = [
   {
-    icon: Layers3,
-    label: "Campaign object",
-    text: "Target, template, ECL2 range, hotspots, batches, jobs, candidates, metrics, and report state."
+    icon: Database,
+    value: "516",
+    label: "approved drugs target GPCRs"
   },
   {
     icon: Activity,
-    label: "Worker spine",
-    text: "A file contract for manifests, model outputs, artifacts, logs, and provenance."
+    value: "36%",
+    label: "of approved drugs act on GPCRs"
   },
   {
-    icon: ShieldCheck,
-    label: "Claim boundary",
-    text: "Computational research-support output only, with mock and live evidence labeled separately."
+    icon: Target,
+    value: "121",
+    label: "GPCR targets have approved drugs"
+  },
+  {
+    icon: BookOpen,
+    value: "2025",
+    label: "Nature Reviews Drug Discovery reference"
+  }
+];
+
+const proofPoints = [
+  {
+    icon: Microscope,
+    label: "Structure-native",
+    text: "The campaign starts from receptor structure, loop context, and hotspot constraints rather than a text-only target brief."
+  },
+  {
+    icon: Cpu,
+    label: "GPU-native",
+    text: "Design and evaluation jobs run as explicit model workers with artifact paths, model names, and retryable run state."
+  },
+  {
+    icon: FileCheck,
+    label: "Evidence-first",
+    text: "Every returned candidate is framed as a research-support dossier: structures, metrics, provenance, and limitations."
   }
 ];
 
@@ -38,11 +61,17 @@ export default function Home() {
 
       <section className="hero-section">
         <div className="hero-copy">
-          <h1>GPCR nanobody campaigns, compiled into inspectable evidence.</h1>
+          <h1>A third of approved drugs act through GPCRs. GPCRclaw makes nanobody campaigns inspectable.</h1>
           <p>
-            A lightweight workbench skeleton for turning an ECL2-focused target brief into a ranked
-            VHH candidate campaign with explicit artifacts, metrics, and limitations.
+            GPCRs are one of medicine's largest target classes. GPCRclaw turns an ECL2-focused
+            receptor brief into a GPU-run VHH design campaign with visible structures, model
+            outputs, rankings, and research-use boundaries.
           </p>
+          <ul className="hero-checks" aria-label="Product capabilities">
+            <li><CheckCircle2 size={17} aria-hidden="true" /> Structure-native nanobody design</li>
+            <li><CheckCircle2 size={17} aria-hidden="true" /> Cloud GPU model execution</li>
+            <li><CheckCircle2 size={17} aria-hidden="true" /> Evidence-rich candidate dossiers</li>
+          </ul>
           <div className="hero-actions">
             <Link className="button primary" href={{ pathname: "/viewer" }}>
               Open LPAR1 demo <ArrowRight size={18} aria-hidden="true" />
@@ -50,41 +79,66 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="campaign-panel" aria-label="Campaign summary">
-          <div className="panel-header">
-            <div>
-              <span className="label">Active path</span>
-              <h2>{demoCampaign.name}</h2>
-            </div>
-            <span className="status-pill live">cloud</span>
+        <div className="hero-science" aria-label="GPCR scale and campaign preview">
+          <div className="scale-mark">
+            <strong>36%</strong>
+            <span>of approved drugs target GPCRs</span>
           </div>
-          <div className="receptor-visual" aria-hidden="true">
+          <div className="receptor-visual hero-receptor" aria-hidden="true">
             <div className="membrane" />
             <div className="helix helix-one" />
             <div className="helix helix-two" />
             <div className="helix helix-three" />
+            <div className="helix helix-four" />
             <div className="ecl-loop">ECL2</div>
             <div className="binder">VHH</div>
           </div>
-          <dl className="target-grid">
-            <div>
-              <dt>Target</dt>
-              <dd>{demoCampaign.target}</dd>
+          <div className="campaign-panel hero-campaign-panel" aria-label="Campaign summary">
+            <div className="panel-header">
+              <div>
+                <span className="label">Active path</span>
+                <h2>{demoCampaign.name}</h2>
+              </div>
+              <span className="status-pill live">cloud</span>
             </div>
-            <div>
-              <dt>Template</dt>
-              <dd>{demoCampaign.template}</dd>
+            <dl className="target-grid">
+              <div>
+                <dt>Target</dt>
+                <dd>{demoCampaign.target}</dd>
+              </div>
+              <div>
+                <dt>Template</dt>
+                <dd>{demoCampaign.template}</dd>
+              </div>
+              <div>
+                <dt>ECL2</dt>
+                <dd>{demoCampaign.ecl2Range}</dd>
+              </div>
+              <div>
+                <dt>Candidates</dt>
+                <dd>{demoCampaign.candidateCount}</dd>
+              </div>
+            </dl>
+            <div className="mini-model-stack" aria-label="Model execution preview">
+              <p><Cpu size={15} aria-hidden="true" /><strong>A100 GPU VM</strong><span>running</span></p>
+              <p><Microscope size={15} aria-hidden="true" /><strong>RFantibody</strong><span>design</span></p>
+              <p><Activity size={15} aria-hidden="true" /><strong>Boltz-2</strong><span>evaluate</span></p>
             </div>
-            <div>
-              <dt>ECL2</dt>
-              <dd>{demoCampaign.ecl2Range}</dd>
-            </div>
-            <div>
-              <dt>Candidates</dt>
-              <dd>{demoCampaign.candidateCount}</dd>
-            </div>
-          </dl>
+          </div>
         </div>
+      </section>
+
+      <section className="scale-band" aria-label="Why GPCR campaigns matter">
+        {scaleStats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <article className="scale-stat" key={stat.label}>
+              <Icon size={24} aria-hidden="true" />
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </article>
+          );
+        })}
       </section>
 
       <section className="content-band">
@@ -112,8 +166,8 @@ export default function Home() {
 
       <section className="content-band stack-band" id="stack">
         <div className="section-heading">
-          <h2>Deployment stack</h2>
-          <p>Small enough for a hackathon demo, aligned with Vercel, and ready to connect to the Python runtime later.</p>
+          <h2>Built for GPCR drug discovery teams</h2>
+          <p>Nanobodies are useful because they can stabilize specific GPCR conformations. GPCRclaw makes that campaign logic visible from receptor context to ranked evidence.</p>
         </div>
         <div className="proof-grid">
           {proofPoints.map((point) => {
@@ -130,7 +184,7 @@ export default function Home() {
       </section>
 
       <footer className="site-footer">
-        <span>Next.js App Router, TypeScript, plain CSS, Vercel config.</span>
+        <span>Scale claims: Nature Reviews Drug Discovery 2025; VHH role: Frontiers in Molecular Biosciences 2022.</span>
         <span>Research support only. No clinical or therapeutic conclusion is implied.</span>
       </footer>
     </main>

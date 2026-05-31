@@ -16,6 +16,22 @@ WORKER_VERSION = "0.1.0"
 EXIT_VALIDATION_ERROR = 2
 EXIT_NOT_CONFIGURED = 78
 REQUIRED_CONFIDENCE_METRICS = ("iptm", "ptm", "complex_plddt")
+OPTIONAL_CONFIDENCE_METRICS = (
+    "ipsae",
+    "ip_sae",
+    "interface_pae",
+    "interface_ipae",
+    "min_antigen_cdr_distance",
+    "counter_screen_margin",
+)
+OPTIONAL_EVIDENCE_FIELDS = (
+    "contact_residues",
+    "epitope_contacts",
+    "hotspot_contacts",
+    "counter_screen_pass",
+    "counter_screen_margin",
+    "related_gpcr_hits",
+)
 
 RunCommand = Callable[[list[str]], subprocess.CompletedProcess[str]]
 ExecutableFinder = Callable[[str], str | None]
@@ -208,6 +224,8 @@ def write_contract_outputs(
     candidate_id = str(candidate.get("candidate_id", f"{target_id}_candidate"))
     candidate_sequence = _sequence_from(candidate, ("sequence", "protein_sequence", "binder_sequence", "nanobody_sequence"), "candidate")
 
+    metric_names = _available_metric_names(confidence)
+    validation_evidence = _validation_evidence(confidence)
     metrics = {
         "job_id": manifest["job_id"],
         "tool": "boltz2",
@@ -223,8 +241,9 @@ def write_contract_outputs(
         },
         "metrics": [
             {"candidate_id": candidate_id, "name": name, "value": confidence[name]}
-            for name in REQUIRED_CONFIDENCE_METRICS
+            for name in metric_names
         ],
+        "validation_evidence": validation_evidence,
         "warnings": [],
         "error": None,
     }
@@ -242,6 +261,11 @@ def write_contract_outputs(
         artifacts["artifacts"].insert(
             1,
             {"kind": "complex_structure", "path": _relative_to_output(output_dir, structure_path), "mime_type": _structure_mime_type(structure_path)},
+        )
+    pae_path = _first_existing(boltz_output_dir, ("pae_*_model_*.npz", "pae_*_model_*.json", "pae_*.npz", "pae_*.json"))
+    if pae_path is not None:
+        artifacts["artifacts"].append(
+            {"kind": "full_pae", "path": _relative_to_output(output_dir, pae_path), "mime_type": _pae_mime_type(pae_path)}
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -369,6 +393,33 @@ def _structure_mime_type(path: Path) -> str:
     if path.suffix.lower() == ".pdb":
         return "chemical/x-pdb"
     return "chemical/x-mmcif"
+
+
+def _pae_mime_type(path: Path) -> str:
+    if path.suffix.lower() == ".json":
+        return "application/json"
+    return "application/octet-stream"
+
+
+def _available_metric_names(confidence: dict[str, Any]) -> list[str]:
+    names = list(REQUIRED_CONFIDENCE_METRICS)
+    for name in OPTIONAL_CONFIDENCE_METRICS:
+        if name in confidence and isinstance(confidence[name], (int, float)):
+            names.append(name)
+    return names
+
+
+def _validation_evidence(confidence: dict[str, Any]) -> dict[str, Any]:
+    evidence: dict[str, Any] = {}
+    for name in OPTIONAL_EVIDENCE_FIELDS:
+        value = confidence.get(name)
+        if isinstance(value, (str, int, float, bool)) or _is_scalar_list(value):
+            evidence[name] = value
+    return evidence
+
+
+def _is_scalar_list(value: Any) -> bool:
+    return isinstance(value, list) and all(isinstance(item, (str, int, float, bool)) for item in value)
 
 
 def _write_dry_run(output_dir: Path, input_yaml: Path, command: list[str]) -> None:

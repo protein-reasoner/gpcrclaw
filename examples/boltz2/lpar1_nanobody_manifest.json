@@ -25,7 +25,24 @@
     "output_format": "pdb",
     "target_chain_id": "A",
     "use_msa_server": false,
-    "use_potentials": true
+    "use_potentials": true,
+    "validation_filters": {
+      "counter_screen": [
+        "S1PR1",
+        "LPAR2",
+        "LPAR3"
+      ],
+      "max_cdr_distance_angstrom": 15,
+      "max_ipsae_angstrom": 15,
+      "min_cdr_distance_angstrom": 15,
+      "required_contact_range": [
+        188,
+        211
+      ],
+      "required_epitope": "ECL2",
+      "target_id": "LPAR1"
+    },
+    "write_full_pae": true
   },
   "worker_version": "0.1.0"
 }

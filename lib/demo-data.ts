@@ -21,7 +21,7 @@ export const pipelineStages = [
   },
   {
     name: "Run evaluation model",
-    description: "Filter and gate generated candidates with Boltz-2 ipTM, pTM, complex pLDDT, and structure artifacts before ranking returned results.",
+    description: "Filter and gate generated candidates with Boltz-2 ipSAE, epitope contacts, ipTM, pTM, VHH developability checks, and structure artifacts before ranking returned results.",
     state: "ready"
   }
 ] as const;

@@ -37,7 +37,9 @@ type ValidationScore = {
   status: "pass" | "fail" | "pending";
   score: number;
   metrics: Record<string, number>;
+  filters?: Record<string, string>;
   reasons: string[];
+  warnings?: string[];
 };
 
 type CampaignJob = {
@@ -88,6 +90,7 @@ export type CampaignRun = {
     minComplexPlddt: number;
     minPtm: number;
     minIptm: number;
+    maxIpsae: number;
   };
   rounds: CampaignRound[];
   finalCandidates: Array<CampaignCandidate & { score: ValidationScore }>;
@@ -122,6 +125,7 @@ export async function startCampaignRun(options: StartCampaignRunOptions = {}) {
       minComplexPlddt: envNumber("GPCRCLAW_CAMPAIGN_MIN_COMPLEX_PLDDT", 70),
       minPtm: envNumber("GPCRCLAW_CAMPAIGN_MIN_PTM", 0.5),
       minIptm: envNumber("GPCRCLAW_CAMPAIGN_MIN_IPTM", 0),
+      maxIpsae: envNumber("GPCRCLAW_CAMPAIGN_MAX_IPSAE", 15),
     },
     rounds: [],
     finalCandidates: [],
@@ -353,8 +357,19 @@ async function writeBoltz2Manifest(run: CampaignRun, round: number, candidate: C
   const boltz2 = isRecord(workerOptions.boltz2) ? { ...workerOptions.boltz2 } : {};
   boltz2.dry_run = false;
   boltz2.use_msa_server = false;
+  boltz2.output_format = stringValue(boltz2.output_format) || "pdb";
+  boltz2.write_full_pae = boltz2.write_full_pae ?? true;
   boltz2.target_chain_id = stringValue(boltz2.target_chain_id) || "A";
   boltz2.candidate_chain_id = stringValue(boltz2.candidate_chain_id) || "B";
+  boltz2.validation_filters = {
+    target_id: "LPAR1",
+    required_epitope: "ECL2",
+    required_contact_range: [188, 211],
+    max_ipsae_angstrom: run.thresholds.maxIpsae,
+    min_cdr_distance_angstrom: 15,
+    max_cdr_distance_angstrom: 15,
+    counter_screen: ["S1PR1", "LPAR2", "LPAR3"],
+  };
   workerOptions.boltz2 = boltz2;
   template.campaign_id = `${run.campaignId}_ROUND_${round}`;
   template.batch_id = `batch_campaign_boltz2_round_${round}`;
@@ -411,10 +426,26 @@ function scoreValidationMetrics(metricsPayload: Record<string, unknown>, thresho
       }
     }
   }
+  for (const [key, value] of Object.entries(metricsPayload)) {
+    const metricValue = numberValue(value);
+    if (metricValue !== undefined) {
+      metrics[key] = metricValue;
+    }
+  }
   const complexPlddt = metrics.complex_plddt ?? metrics.mean_plddt;
   const ptm = metrics.ptm;
   const iptm = metrics.iptm ?? 0;
-  const reasons = [];
+  const ipsae = metrics.ipsae ?? metrics.ip_sae ?? metrics.interface_pae ?? metrics.interface_ipae;
+  const candidate = isRecord(metricsPayload.candidate) ? metricsPayload.candidate : {};
+  const sequence = stringValue(candidate.sequence || candidate.binder_sequence || candidate.nanobody_sequence) || "";
+  const cdr3 = stringValue(candidate.cdr3) || inferCdr3(sequence);
+  const targetId = (stringValue(candidate.target_id) || stringValue(metricsPayload.target_id) || "LPAR1").toUpperCase();
+  const contactResidues = residueNumbersFromPayload(metricsPayload);
+  const epitopeRule = epitopeRuleForTarget(targetId);
+  const reasons: string[] = [];
+  const warnings: string[] = [];
+  const filters: Record<string, string> = {};
+
   if (complexPlddt === undefined || complexPlddt < thresholds.minComplexPlddt) {
     reasons.push(`complex_plddt<${thresholds.minComplexPlddt}`);
   }
@@ -424,13 +455,208 @@ function scoreValidationMetrics(metricsPayload: Record<string, unknown>, thresho
   if (iptm < thresholds.minIptm) {
     reasons.push(`iptm<${thresholds.minIptm}`);
   }
-  const score = (Math.max(0, complexPlddt || 0) / 100) * 0.45 + Math.max(0, iptm) * 0.35 + Math.max(0, ptm || 0) * 0.2;
+  if (ipsae !== undefined) {
+    filters.ipsae = ipsae <= thresholds.maxIpsae ? "pass" : "fail";
+    if (ipsae > thresholds.maxIpsae) {
+      reasons.push(`ipsae>${thresholds.maxIpsae}`);
+    }
+  } else {
+    filters.ipsae = "missing";
+    warnings.push("ipsae_missing_rank_uses_boltz_confidence_fallback");
+  }
+
+  const sequenceFilters = scoreNanobodySequence(sequence, cdr3);
+  Object.assign(filters, sequenceFilters.filters);
+  reasons.push(...sequenceFilters.reasons);
+  warnings.push(...sequenceFilters.warnings);
+
+  if (epitopeRule) {
+    if (contactResidues.length) {
+      const inRange = contactResidues.some((residue) => residue >= epitopeRule.start && residue <= epitopeRule.end);
+      filters.epitope_contacts = inRange ? "pass" : "fail";
+      if (!inRange) {
+        reasons.push(`${targetId.toLowerCase()}_${epitopeRule.label.toLowerCase()}_contacts_missing`);
+      }
+    } else {
+      filters.epitope_contacts = "missing";
+      warnings.push(`${targetId.toLowerCase()}_${epitopeRule.label.toLowerCase()}_contact_evidence_missing`);
+    }
+  }
+
+  const counterScreen = counterScreenStatus(metricsPayload);
+  filters.counter_screen = counterScreen.status;
+  if (counterScreen.status === "fail") {
+    reasons.push(counterScreen.reason || "counter_screen_failed");
+  } else if (counterScreen.status === "missing") {
+    warnings.push("counter_screen_evidence_missing");
+  }
+
+  const ipsaeScore = ipsae === undefined ? 0.5 : clamp01((thresholds.maxIpsae - ipsae) / thresholds.maxIpsae);
+  const score =
+    (Math.max(0, complexPlddt || 0) / 100) * 0.25 +
+    Math.max(0, iptm) * 0.2 +
+    Math.max(0, ptm || 0) * 0.1 +
+    ipsaeScore * 0.35 +
+    sequenceFilters.score * 0.1;
   return {
     status: reasons.length ? "fail" : "pass",
     score,
     metrics,
-    reasons: reasons.length ? reasons : ["passes_boltz2_thresholds"],
+    filters,
+    reasons: reasons.length ? reasons : ["passes_boltz2_vhh_filter_thresholds"],
+    warnings,
   };
+}
+
+function scoreNanobodySequence(sequence: string, cdr3: string) {
+  const reasons: string[] = [];
+  const warnings: string[] = [];
+  const filters: Record<string, string> = {};
+  const normalized = sequence.toUpperCase().replace(/[^A-Z]/g, "");
+  const normalizedCdr3 = cdr3.toUpperCase().replace(/[^A-Z]/g, "");
+
+  if (!normalized) {
+    filters.vhh_fold = "missing";
+    reasons.push("nanobody_sequence_missing");
+    return { score: 0, filters, reasons, warnings };
+  }
+
+  const vhhFramework = normalized.startsWith("EVQL") || normalized.startsWith("QVQL");
+  const hasVhhTail = /WGQG[TKL]QVTVS/.test(normalized) || /WG.G.QVTVS/.test(normalized);
+  filters.vhh_fold = vhhFramework && hasVhhTail ? "pass" : "warning";
+  if (!vhhFramework || !hasVhhTail) {
+    warnings.push("vhh_framework_motif_incomplete");
+  }
+
+  const cysteineCount = [...normalized].filter((aa) => aa === "C").length;
+  filters.canonical_disulfide = cysteineCount === 2 ? "pass" : "fail";
+  if (cysteineCount !== 2) {
+    reasons.push(`vhh_cysteine_count_${cysteineCount}`);
+  }
+
+  filters.no_extra_cysteines = cysteineCount <= 2 ? "pass" : "fail";
+  if (cysteineCount > 2) {
+    reasons.push("extra_cysteines_present");
+  }
+
+  filters.cdr3_length = normalizedCdr3.length >= 10 && normalizedCdr3.length <= 24 ? "pass" : "fail";
+  if (normalizedCdr3.length < 10 || normalizedCdr3.length > 24) {
+    reasons.push(`cdr3_length_${normalizedCdr3.length}_outside_10_24`);
+  }
+
+  filters.cdr_nglyc = /N[^P][ST]/.test(normalizedCdr3) ? "fail" : "pass";
+  if (filters.cdr_nglyc === "fail") {
+    reasons.push("cdr_n_glycosylation_motif");
+  }
+
+  filters.deamidation_isomerization = /(NG|NS|NT|DG|DP)/.test(normalizedCdr3) ? "warning" : "pass";
+  if (filters.deamidation_isomerization === "warning") {
+    warnings.push("cdr_deamidation_or_isomerization_hotspot");
+  }
+
+  const pi = estimateIsoelectricPoint(normalized);
+  filters.pI = pi >= 5 && pi <= 9.5 ? "pass" : "warning";
+  if (filters.pI === "warning") {
+    warnings.push(`rough_pI_${pi.toFixed(1)}_outside_5_9_5`);
+  }
+
+  const hydrophobicRun = /[AILMFWVY]{5,}/.test(normalized);
+  const hydrophobicFraction = [...normalized].filter((aa) => "AILMFWVY".includes(aa)).length / normalized.length;
+  filters.aggregation_risk = hydrophobicRun || hydrophobicFraction > 0.42 ? "warning" : "pass";
+  if (filters.aggregation_risk === "warning") {
+    warnings.push("aggregation_risk_sequence_heuristic");
+  }
+
+  const passCount = Object.values(filters).filter((value) => value === "pass").length;
+  return { score: passCount / Math.max(1, Object.keys(filters).length), filters, reasons, warnings };
+}
+
+function epitopeRuleForTarget(targetId: string) {
+  if (targetId === "LPAR1") {
+    return { label: "ECL2", start: 188, end: 211 };
+  }
+  if (targetId === "MRGPRX2") {
+    return { label: "ECL2", start: 165, end: 185 };
+  }
+  if (targetId === "MOR" || targetId === "OPRM1") {
+    return { label: "NbE_ECL2_ECL3", start: 0, end: Number.MAX_SAFE_INTEGER };
+  }
+  return undefined;
+}
+
+function residueNumbersFromPayload(payload: Record<string, unknown>): number[] {
+  const evidence = isRecord(payload.validation_evidence) ? payload.validation_evidence : {};
+  const values = [
+    payload.contact_residues,
+    payload.epitope_contacts,
+    evidence.contact_residues,
+    evidence.epitope_contacts,
+  ];
+  const residues: number[] = [];
+  for (const value of values) {
+    if (!Array.isArray(value)) {
+      continue;
+    }
+    for (const item of value) {
+      const residue = typeof item === "number" ? item : Number(String(item).match(/\d+/)?.[0]);
+      if (Number.isFinite(residue)) {
+        residues.push(residue);
+      }
+    }
+  }
+  return residues;
+}
+
+function counterScreenStatus(payload: Record<string, unknown>) {
+  const evidence = isRecord(payload.validation_evidence) ? payload.validation_evidence : {};
+  const passValue = payload.counter_screen_pass ?? evidence.counter_screen_pass;
+  if (typeof passValue === "boolean") {
+    return passValue ? { status: "pass" } : { status: "fail", reason: "counter_screen_failed" };
+  }
+  const margin = numberValue(payload.counter_screen_margin) ?? numberValue(evidence.counter_screen_margin);
+  if (margin !== undefined) {
+    return margin > 0 ? { status: "pass" } : { status: "fail", reason: "counter_screen_margin_nonpositive" };
+  }
+  return { status: "missing" };
+}
+
+function inferCdr3(sequence: string): string {
+  const match = sequence.match(/C[A-Z]{6,30}WGQG/);
+  return match ? match[0].replace(/WGQG$/, "") : "";
+}
+
+function estimateIsoelectricPoint(sequence: string): number {
+  let low = 0;
+  let high = 14;
+  for (let i = 0; i < 40; i += 1) {
+    const mid = (low + high) / 2;
+    if (netChargeAtPh(sequence, mid) > 0) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+  return (low + high) / 2;
+}
+
+function netChargeAtPh(sequence: string, ph: number): number {
+  const counts = (aa: string) => [...sequence].filter((value) => value === aa).length;
+  const pos =
+    1 / (1 + 10 ** (ph - 9.69)) +
+    counts("K") / (1 + 10 ** (ph - 10.5)) +
+    counts("R") / (1 + 10 ** (ph - 12.4)) +
+    counts("H") / (1 + 10 ** (ph - 6.0));
+  const neg =
+    1 / (1 + 10 ** (2.34 - ph)) +
+    counts("D") / (1 + 10 ** (3.86 - ph)) +
+    counts("E") / (1 + 10 ** (4.25 - ph)) +
+    counts("C") / (1 + 10 ** (8.33 - ph)) +
+    counts("Y") / (1 + 10 ** (10.07 - ph));
+  return pos - neg;
+}
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
 }
 
 async function runWorkerScript(command: string, args: string[]): Promise<WorkerLaunchResult> {

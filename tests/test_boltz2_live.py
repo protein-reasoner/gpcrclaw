@@ -99,9 +99,19 @@ class Boltz2LiveTest(unittest.TestCase):
                 prediction_dir = out_dir / "predictions" / "boltz_input"
                 prediction_dir.mkdir(parents=True)
                 (prediction_dir / "confidence_boltz_input_model_0.json").write_text(
-                    json.dumps({"iptm": 0.73, "ptm": 0.68, "complex_plddt": 82.4})
+                    json.dumps(
+                        {
+                            "iptm": 0.73,
+                            "ptm": 0.68,
+                            "complex_plddt": 82.4,
+                            "ipsae": 9.8,
+                            "contact_residues": [188, 194, 205],
+                            "counter_screen_pass": True,
+                        }
+                    )
                 )
                 (prediction_dir / "boltz_input_model_0.pdb").write_text("HEADER BOLTZ\nEND\n")
+                (prediction_dir / "pae_boltz_input_model_0.json").write_text("{}")
                 return subprocess.CompletedProcess(args, 0, "boltz ok\n", "")
 
             exit_code = run_boltz2_live(manifest_path, runner=runner, executable_finder=lambda _: "/usr/bin/boltz")
@@ -122,9 +132,13 @@ class Boltz2LiveTest(unittest.TestCase):
             metrics = json.loads((output / "metrics.json").read_text())
             self.assertEqual(metrics["status"], "complete")
             self.assertEqual(metrics["metrics"][0], {"candidate_id": "LPAR1_NB_001", "name": "iptm", "value": 0.73})
+            self.assertIn({"candidate_id": "LPAR1_NB_001", "name": "ipsae", "value": 9.8}, metrics["metrics"])
+            self.assertEqual(metrics["validation_evidence"]["contact_residues"], [188, 194, 205])
+            self.assertTrue(metrics["validation_evidence"]["counter_screen_pass"])
             artifacts = json.loads((output / "artifacts.json").read_text())["artifacts"]
             self.assertIn("raw_metrics", {artifact["kind"] for artifact in artifacts})
             self.assertIn("complex_structure", {artifact["kind"] for artifact in artifacts})
+            self.assertIn("full_pae", {artifact["kind"] for artifact in artifacts})
             self.assertIn("worker_logs", {artifact["kind"] for artifact in artifacts})
 
 
